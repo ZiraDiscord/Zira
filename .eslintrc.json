@@ -1,0 +1,38 @@
+{
+  "extends": "airbnb",
+  "parserOptions": {
+    "sourceType": "script"
+  },
+  "rules": {
+    "valid-jsdoc": ["error",
+      {
+        "requireReturn": false,
+        "requireReturnDescription": false,
+        "preferType": {
+          "String": "string",
+          "Number": "number",
+          "Boolean": "boolean",
+          "Function": "function",
+          "object": "Object",
+          "date": "Date",
+          "error": "Error"
+        },
+        "prefer": {
+          "return": "returns"
+        }
+      }
+    ],
+    "indent": "off",
+    "strict": ["error", "safe"],
+    "linebreak-style": "off",
+    "no-restricted-syntax": ["off"],
+    "no-console": "off",
+    "no-plusplus": "off",
+    "max-len": "off",
+    "class-methods-use-this": "off",
+    "no-underscore-dangle": "off",
+    "no-restricted-globals": "off",
+    "no-await-in-loop": "off",
+    "object-curly-newline": "off"
+  }
+}
