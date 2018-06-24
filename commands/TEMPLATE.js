@@ -8,9 +8,9 @@ exports.Run = async function Run(caller, command, GUILD) {
         color: caller.color.yellow,
       },
     }).catch(console.error);
-    return; // eslint-disable-line
+    return;
   }
-  const guild = GUILD;
+  const guild = GUILD; // eslint-disable-line no-unused-vars
 };
 
 exports.Settings = function Settings() {

@@ -33,6 +33,7 @@
     "no-underscore-dangle": "off",
     "no-restricted-globals": "off",
     "no-await-in-loop": "off",
-    "object-curly-newline": "off"
+    "object-curly-newline": "off",
+    "react/jsx-curly-brace-presence": "off"
   }
 }
