@@ -2,7 +2,7 @@
 
 exports.Run = async function Run(caller, command, GUILD) {
   if (!command.msg.channel.guild) {
-    caller.bot.createMessage(command.msg.channel.id, {
+    caller.utils.message(command.msg.channel.id, {
       embed: {
         description: ':warning: This command can\'t be used in DM',
         color: caller.color.yellow,

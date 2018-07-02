@@ -33,7 +33,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       role.ids.forEach((id, index) => {
         roles += `<@&${id}>${(index === role.ids.length - 1) ? ' ' : ', '}`;
       });
-      caller.bot.createMessage(guild.log, {
+      caller.utils.message(guild.log, {
         embed: {
           footer: {
             text: `${user.username}#${user.discriminator}`,
@@ -58,7 +58,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       console.error(e);
       return;
     }
-    caller.bot.createMessage(guild.log, {
+    caller.utils.message(guild.log, {
       embed: {
         footer: {
           text: `${user.username}#${user.discriminator}`,

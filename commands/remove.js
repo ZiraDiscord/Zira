@@ -13,13 +13,13 @@ exports.Run = async function Run(caller, command, GUILD) {
   const guild = GUILD;
   const lang = caller.utils.getLang(guild);
   if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
-    if (!command.emoji || !command.params[1] || !command.params[2]) {
+    if (!command.params[0] || !command.params[1]) {
       const ROLES = command.msg.channel.guild.roles.filter(r => r.id !== command.msg.channel.guild.id);
       caller.utils.message(command.msg.channel.id, {
         embed: {
           color: caller.color.blue,
           title: lang.title,
-          description: `**${command.prefix}${lang.multi.help}\n\n${lang.example}${command.prefix}multi :information_source: Updates, <@&${ROLES[caller.utils.randomNumber(0, ROLES.length - 1)].id}>\n${command.prefix}multi :information_source: Updates, <@&${ROLES[caller.utils.randomNumber(0, ROLES.length - 1)].id}>, <@&${ROLES[caller.utils.randomNumber(0, ROLES.length - 1)].id}>`,
+          description: `**${command.prefix}${lang.remove.help}\n\n${lang.example}${command.prefix}remove :white_check_mark: New\n${command.prefix}remove :white_check_mark: New, <@&${ROLES[caller.utils.randomNumber(0, ROLES.length - 1)].id}>`,
         },
       }).catch(console.error);
       return;
@@ -49,22 +49,31 @@ exports.Run = async function Run(caller, command, GUILD) {
     Params.forEach((item, index) => {
       if (item.indexOf('<@&') !== -1) Params[index] = item.replace(/\D+/g, '');
     });
-    const roles = [];
-    for (let i = 0; i < Params.length; i++) {
-        // eslint-disable-next-line no-loop-func
-        const [role] = command.msg.channel.guild.roles.filter(r => r.id === Params[i] || r.name.toLowerCase().indexOf(Params[i].toLowerCase()) !== -1);
-        if (!role) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleError,
-              description: lang.unknownRole[0] + caller.utils.ordinalSuffix(i + 1) + lang.unknownRole[1],
-              color: caller.color.yellow,
-            },
-          }).catch(console.error);
-          return;
-        }
-        roles.push(role.id);
+    const [remove] = command.msg.channel.guild.roles.filter(r => r.id === Params[1] || r.name.toLowerCase().indexOf(Params[1].toLowerCase()) !== -1);
+    if (!remove) {
+      caller.utils.message(command.msg.channel.id, {
+        embed: {
+          title: lang.titleError,
+          description: lang.unknownRole[0] + caller.utils.ordinalSuffix(1) + lang.unknownRole[1],
+          color: caller.color.yellow,
+        },
+      }).catch(console.error);
+      return;
     }
+    let add;
+    if (Params[2]) {
+    [add] = command.msg.channel.guild.roles.filter(r => r.id === Params[2] || r.name.toLowerCase().indexOf(Params[2].toLowerCase()) !== -1);
+    if (!add) {
+      caller.utils.message(command.msg.channel.id, {
+        embed: {
+          title: lang.titleError,
+          description: lang.unknownRole[0] + caller.utils.ordinalSuffix(1) + lang.unknownRole[1],
+          color: caller.color.yellow,
+        },
+      }).catch(console.error);
+      return;
+    }
+  }
     let emojiFree = true;
     for (let r = 0; r < guild.roles.length; r++) {
       if (guild.roles[r].msg === guild.emoji) {
@@ -120,22 +129,20 @@ exports.Run = async function Run(caller, command, GUILD) {
       }
       return;
     }
-    let message = '';
-    roles.forEach((id, index) => {
-      message += `<@&${id}>${(index === roles.length - 1) ? ' ' : ', '}`;
-    });
+    const message = (add) ? `<@&${remove.id}>${lang.remove.set[0]}<@&${add.id}>${lang.remove.set[1]}` : `<@&${remove.id}>${lang.remove.set[0]}`;
     guild.roles.push({
-      ids: roles,
+      add: (add) ? add.id : null,
+      id: remove.id,
       name: message,
       emoji,
       msg: guild.emoji,
       channel: guild.chan,
-      multi: true,
+      remove: true,
     });
     caller.utils.message(command.msg.channel.id, {
       embed: {
         title: lang.titleComp,
-        description: message + lang.multi.set[0] + emoji + lang.multi.set[1],
+        description: message + lang.remove.set[2] + emoji + lang.remove.set[3],
         color: caller.color.green,
       },
     }).catch(console.error);

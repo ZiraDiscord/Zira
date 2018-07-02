@@ -11,53 +11,52 @@ exports.Run = async function Run(caller, command, GUILD) {
     return;
   }
   const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
+  const lang = caller.utils.getLang(guild.lang);
+  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageGuild')) {
     if (!command.params[0]) {
-      const CHANNELS = command.msg.channel.guild.channels.filter(c => !c.type);
       caller.utils.message(command.msg.channel.id, {
         embed: {
-          color: caller.color.blue,
           title: lang.title,
-          description: `**${command.prefix}${lang.channel.help}\n\n${lang.example}${command.prefix}channel <#${CHANNELS[caller.utils.randomNumber(0, CHANNELS.length - 1)].id}>\n[${lang.guide}](https://zira.pw/guide/channel)`,
+          color: caller.color.blue,
+          description: `**${command.prefix}${lang.prefix.help}`,
         },
-      }).catch(console.error);
+      });
       return;
     }
-    const channel = command.msg.channel.guild.channels.get(command.params[0].replace(/\D+/g, ''));
-    if (!channel) {
+    const prefix = command.params.join(' ');
+    if (prefix.length < 1 || prefix.length > 10) {
       caller.utils.message(command.msg.channel.id, {
         embed: {
-          color: caller.color.yellow,
           title: lang.titleError,
-          description: lang.unknownChannel,
+          description: lang.prefix.error,
+          color: caller.color.yellow,
         },
-      }).catch(console.error);
+      });
       return;
     }
-    guild.chan = channel.id;
+    guild.prefix = prefix;
     caller.utils.message(command.msg.channel.id, {
       embed: {
-        color: caller.color.green,
         title: lang.titleComp,
-        description: `${lang.channel.set}${channel.id}>`,
+        description: lang.prefix.set + guild.prefix,
+        color: caller.color.green,
       },
-    }).catch(console.error);
+    });
     caller.utils.updateGuild(guild);
   } else {
     caller.utils.message(command.msg.channel.id, {
       embed: {
         title: lang.titleError,
-        description: lang.perm.noPerm,
+        description: lang.perm.noGuildPerm,
         color: caller.color.yellow,
       },
-    }).catch(console.error);
+    });
   }
 };
 
 exports.Settings = function Settings() {
   return {
     show: true,
-    category: 'role',
+    category: 'misc',
   };
 };

@@ -52,6 +52,37 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       }
       if (me.permission.has('manageMessages')) await message.removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user).catch(console.error);
     }
+    if (role.remove) {
+      if (user.roles.indexOf(role.id) !== -1) user.roles.splice(user.roles.indexOf(role.id), 1);
+      if (user.roles.indexOf(role.add) === -1 && role.add) user.roles.push(role.add);
+      try {
+        await user.edit({
+          roles: self.utils.combine(user.roles, role.ids),
+        }, 'Reaction Role');
+      } catch (e) {
+        console.error(e);
+        return;
+      }
+      self.bot.createMessage(guild.log, {
+        embed: {
+          footer: {
+            text: `${user.username}#${user.discriminator}`,
+            icon_url: user.avatarURL,
+          },
+          color: 0x00d62e,
+          description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${lang.log.remove[1]}<@&${role.id}>${lang.log.give[2]}<@&${role.add}>`,
+          timestamp: new Date(),
+        },
+      }).catch((e) => {
+        console.error(e);
+        if (e.code === 50013 || e.code === 50001) {
+          guild.log = '';
+          self.utils.updateGuild(guild);
+        }
+      });
+      if (me.permission.has('manageMessages')) await message.removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user).catch(console.error);
+      return; // eslint-disable-line
+    }
     if (role.multi) {
       try {
         await user.edit({

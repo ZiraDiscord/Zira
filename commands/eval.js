@@ -7,15 +7,15 @@ exports.Run = async function Run(caller, command, guild) { // eslint-disable-lin
     let evaled = eval(code); // eslint-disable-line
     if (typeof evaled !== 'string') evaled = require('util').inspect(evaled); // eslint-disable-line
     if (evaled.length > 1960) {
-      caller.bot.createMessage(command.msg.channel.id, '```Result longer then 2000 characters so it was logged to console.```');
+      caller.utils.message(command.msg.channel.id, '```Result longer then 2000 characters so it was logged to console.```');
       console.log(evaled);
     } else if (evaled === undefined) {
-      caller.bot.createMessage(command.msg.channel.id, `\`\`\`json\n${evaled}\n\`\`\``);
+      caller.utils.message(command.msg.channel.id, `\`\`\`json\n${evaled}\n\`\`\``);
     } else {
-      caller.bot.createMessage(command.msg.channel.id, `\`\`\`json\n${evaled}\n\`\`\``);
+      caller.utils.message(command.msg.channel.id, `\`\`\`json\n${evaled}\n\`\`\``);
     }
   } catch (e) {
-    caller.bot.createMessage(command.msg.channel.id, `\`\`\`json\n${e}\n\`\`\``);
+    caller.utils.message(command.msg.channel.id, `\`\`\`json\n${e}\n\`\`\``);
   }
 };
 

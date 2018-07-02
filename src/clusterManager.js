@@ -32,18 +32,6 @@ class ClusterManager {
 
     this.cluster.on('message', async (worker, data) => {
       switch (data.name) {
-        case 'info':
-          logger.Info(data.title, data.code, data.message);
-          break;
-        case 'success':
-          logger.Success(data.title, data.code, data.message);
-          break;
-        case 'warning':
-          logger.Warning(data.title, data.code, data.message);
-          break;
-        case 'log':
-          console.log(data.message);
-          break;
         case 'user':
         case 'guild':
           this.Find(1, data.name, data.id);

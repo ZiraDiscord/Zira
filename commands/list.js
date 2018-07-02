@@ -2,7 +2,7 @@
 
 exports.Run = async function Run(caller, command, GUILD) {
   if (!command.msg.channel.guild) {
-    caller.bot.createMessage(command.msg.channel.id, {
+    caller.utils.message(command.msg.channel.id, {
       embed: {
         description: ':warning: This command can\'t be used in DM',
         color: caller.color.yellow,
@@ -12,8 +12,7 @@ exports.Run = async function Run(caller, command, GUILD) {
   }
   const guild = GUILD;
   const lang = caller.utils.getLang(guild);
-  const member = command.msg.channel.guild.members.get(command.msg.author.id);
-  if (command.msg.author.id === process.env.OWNER || member.permission.has('manageRoles')) {
+  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
     let list = lang.list.top;
     let list2 = '';
     let list3 = '';
@@ -36,6 +35,7 @@ exports.Run = async function Run(caller, command, GUILD) {
           type = 'Multi';
           role = item.name;
         }
+        if (item.remove) type = 'Remove';
         if (list.length < 1950) {
           list += `${(item.channel) ? `<#${item.channel}>` : `<#${guild.chan}>`} ~~-~~ ${item.msg} ~~-~~ ${type} ~~-~~ ${item.emoji} ~~-~~ ${role}\n`;
         } else if (list2.length < 1950) {
@@ -47,7 +47,7 @@ exports.Run = async function Run(caller, command, GUILD) {
         }
       });
     });
-    caller.bot.createMessage(command.msg.channel.id, {
+    caller.utils.message(command.msg.channel.id, {
       embed: {
         color: caller.color.blue,
         title: `${command.msg.channel.guild.name} ${lang.list.title}`,
@@ -55,7 +55,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       },
     }).catch(console.error);
     if (second) {
-      caller.bot.createMessage(command.msg.channel.id, {
+      caller.utils.message(command.msg.channel.id, {
         embed: {
           color: caller.color.blue,
           title: `${command.msg.channel.guild.name} ${lang.list.cont}`,
@@ -64,7 +64,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       }).catch(console.error);
     }
     if (third) {
-      caller.bot.createMessage(command.msg.channel.id, {
+      caller.utils.message(command.msg.channel.id, {
         embed: {
           color: caller.color.blue,
           title: `${command.msg.channel.guild.name} ${lang.list.cont}`,
@@ -73,7 +73,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       }).catch(console.error);
     }
   } else {
-    caller.bot.createMessage(command.msg.channel.id, {
+    caller.utils.message(command.msg.channel.id, {
       embed: {
         title: lang.titleError,
         description: lang.perm.noPerm,

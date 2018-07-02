@@ -2,7 +2,7 @@
 
 exports.Run = async function Run(caller, command, GUILD) {
   if (!command.msg.channel.guild) {
-    caller.bot.createMessage(command.msg.channel.id, {
+    caller.utils.message(command.msg.channel.id, {
       embed: {
         description: ':warning: This command can\'t be used in DM',
         color: caller.color.yellow,
@@ -12,11 +12,10 @@ exports.Run = async function Run(caller, command, GUILD) {
   }
   const guild = GUILD;
   const lang = caller.utils.getLang(guild);
-  const member = command.msg.channel.guild.members.get(command.msg.author.id);
-  if (command.msg.author.id === process.env.OWNER || member.permission.has('manageRoles')) {
+  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
     if (!command.params[0] || !command.params[1]) {
       const ROLES = command.msg.channel.guild.roles.filter(r => r.id !== command.msg.channel.guild.id);
-      caller.bot.createMessage(command.msg.channel.id, {
+      caller.utils.message(command.msg.channel.id, {
         embed: {
           color: caller.color.blue,
           title: lang.title,
@@ -26,7 +25,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       return;
     }
     if (!guild.chan) {
-      caller.bot.createMessage(command.msg.channel.id, {
+      caller.utils.message(command.msg.channel.id, {
         embed: {
           title: lang.titleError,
           description: lang.noChannel[0] + command.prefix + lang.noChannel[1],
@@ -36,7 +35,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       return;
     }
     if (!guild.emoji || !guild.msgid.length) {
-      caller.bot.createMessage(command.msg.channel.id, {
+      caller.utils.message(command.msg.channel.id, {
         embed: {
           title: lang.titleError,
           description: lang.noMessage[0] + command.prefix + lang.noMessage[1],
@@ -47,7 +46,7 @@ exports.Run = async function Run(caller, command, GUILD) {
     }
     if (command.params[1] === 'check') {
       if (!guild.roles.filter(r => r.msg === command.params[0]).length) {
-        caller.bot.createMessage(command.msg.channel.id, {
+        caller.utils.message(command.msg.channel.id, {
           embed: {
             title: lang.titleError,
             description: lang.delete.noRoles,
@@ -71,7 +70,7 @@ exports.Run = async function Run(caller, command, GUILD) {
         }
       });
       if (Removed) {
-        caller.bot.createMessage(command.msg.channel.id, {
+        caller.utils.message(command.msg.channel.id, {
           embed: {
             title: lang.titleComp,
             description: lang.delete.checkRemove[0] + Removed + lang.delete.checkRemove[1],
@@ -80,7 +79,7 @@ exports.Run = async function Run(caller, command, GUILD) {
         }).catch(console.error);
         caller.utils.updateGuild(guild);
       } else {
-        caller.bot.createMessage(command.msg.channel.id, {
+        caller.utils.message(command.msg.channel.id, {
           embed: {
             title: lang.titleComp,
             description: lang.delete.checkGood,
@@ -111,7 +110,7 @@ exports.Run = async function Run(caller, command, GUILD) {
         });
         if (found) {
           guild.roles.splice(pos, 1);
-          caller.bot.createMessage(command.msg.channel.id, {
+          caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.titleComp,
               description: lang.delete.removed[0] + old.id + lang.delete.removed[1] + old.emoji,
@@ -125,7 +124,7 @@ exports.Run = async function Run(caller, command, GUILD) {
             caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
           }
         } else {
-          caller.bot.createMessage(command.msg.channel.id, {
+          caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.titleError,
               description: lang.delete.setup,
@@ -134,7 +133,7 @@ exports.Run = async function Run(caller, command, GUILD) {
           }).catch(console.error);
         }
       } else {
-        caller.bot.createMessage(command.msg.channel.id, {
+        caller.utils.message(command.msg.channel.id, {
           embed: {
             title: lang.titleError,
             description: lang.delete.unknown,
@@ -144,7 +143,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       }
     }
   } else {
-    caller.bot.createMessage(command.msg.channel.id, {
+    caller.utils.message(command.msg.channel.id, {
       embed: {
         title: lang.titleError,
         description: lang.perm.noPerm,

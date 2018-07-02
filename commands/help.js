@@ -21,7 +21,7 @@ exports.Run = async function Run(caller, command, GUILD) {
         value: '',
       }, {
         name: lang.help.categories.suggestion,
-        value: 'test',
+        value: '',
       },
       {
         name: lang.help.categories.misc,
@@ -45,19 +45,19 @@ exports.Run = async function Run(caller, command, GUILD) {
             embed.fields[1].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
             break;
           case 'suggestion':
-            embed.fields[1].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
+            embed.fields[2].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
             break;
           default:
             embed.fields[3].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
         }
       }
     } catch (e) {
-      console.error(e);
+      caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
     } finally {
       delete require.cache[require.resolve(`./${file}`)];
     }
   });
-  caller.bot.createMessage(command.msg.channel.id, {
+  caller.utils.message(command.msg.channel.id, {
     embed,
   }).catch(console.error);
 };

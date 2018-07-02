@@ -2,31 +2,38 @@
 
 exports.Run = async function Run(caller, data) {
   const guild = await caller.utils.getGuild(data.guild_id);
-  let found = false;
-  const foundArray = [];
-  if (data.id) {
-    if (guild.msgid.indexOf(data.id) !== -1) {
-      found = true;
-      foundArray.push(data.id);
-    }
-  } else {
-    for (let i = 0; i < data.ids.length; i++) {
-      if (guild.msgid.indexOf(data.ids[i]) !== -1) {
-        found = true;
-        foundArray.push(data.ids[i]);
-      }
-    }
-  }
-  if (!found) return;
-  await foundArray.forEach(async (id) => {
-    guild.msgid.splice(guild.msgid.indexOf(id), 1);
-    guild.roles.forEach(async (item, index) => {
-      console.log(item.msg === id);
-      if (item.msg === id) {
-        console.log(guild.roles[index]);
-        guild.roles.splice(index, 1);
+  let changed = false;
+  if (guild.suggestions) {
+    let suggestionArray = [];
+    await guild.suggestions.forEach((obj, index) => {
+      if (obj.message === data.id) {
+        suggestionArray.push(index);
+      } else if (data.ids && data.ids.indexOf(obj.message) !== -1) {
+        suggestionArray.push(index);
       }
     });
+    if (suggestionArray.length) {
+      changed = true;
+      suggestionArray = suggestionArray.reverse();
+      suggestionArray.forEach((i) => {
+        guild.suggestions.splice(i, 1);
+      });
+    }
+  }
+  let roleArray = [];
+  await guild.roles.forEach((item, index) => {
+    if (item.msg === data.id) {
+      roleArray.push(index);
+    } else if (data.ids && data.ids.indexOf(item.msg) !== -1) {
+      roleArray.push(index);
+    }
   });
-  await caller.utils.updateGuild(guild);
+  if (roleArray.length) {
+      changed = true;
+      roleArray = roleArray.reverse();
+    roleArray.forEach((i) => {
+      guild.roles.splice(i, 1);
+    });
+  }
+  if (changed) await caller.utils.updateGuild(guild);
 };

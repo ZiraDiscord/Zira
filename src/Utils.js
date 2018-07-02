@@ -7,6 +7,18 @@ class Utils {
   constructor(caller) {
     this.db = caller.db;
     this.bot = caller.bot;
+    this.caller = caller;
+  }
+
+  async message(channel, content) {
+    try {
+      await this.bot.createMessage(channel, content);
+    } catch (e) {
+      this.caller.Logger.Warning('Message', ` ${channel} `, e.message.replace(/\n\s/g, ''));
+      if (e.code === 50013) {
+        this.bot.createMessage(channel, 'I\'m unable to send the message as I\'m missing the permission `Embed Links` in this channel.').catch(err => this.caller.Logger.Warning('Error Message', ` ${channel} `, err.message.replace(/\n\s/g, '')));
+      }
+    }
   }
 
   snowflakeDate(resourceID) {
@@ -190,7 +202,7 @@ class Utils {
         commands: caller.handler.commands,
         users: caller.bot.users.filter(u => !u.bot).length,
         bots: caller.bot.users.filter(u => u.bot).length,
-        guilds: caller.bot.guilds.size,
+        guilds: caller.bot.guilds.map(g => g.id),
         memory: (process.memoryUsage().rss / 1024 / 1024).toFixed(2),
         uptime: caller.utils.getTime(caller.bot.startTime),
         cluster: caller.id,

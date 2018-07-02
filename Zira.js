@@ -3,6 +3,7 @@
 const Eris = require('eris');
 const fs = require('fs');
 const Logger = require('disnode-logger');
+const Trello = require('trello');
 const CommandHandler = require('./src/CommandHandler.js');
 const DB = require('./src/DB.js');
 const Utils = require('./src/Utils.js');
@@ -25,6 +26,7 @@ class Zira {
       lastShardID,
       defaultImageFormat: 'png',
       compress: true,
+      messageLimit: 1,
     });
     DB.Connect();
     this.handler = new CommandHandler(this.bot, DB);
@@ -36,9 +38,11 @@ class Zira {
       blue: 3447003,
       green: 1433628,
       yellow: 16772880,
+      red: 16729871,
     };
     this.utils = new Utils(this);
     this.userRateLimits = {};
+    if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN && process.env.TRELLO_ID) this.trello = new Trello(process.env.TRELLO_KEY, process.env.TRELLO_TOKEN);
 
     this.bot.on('ready', () => {
       this.Logger.Success(this.bot.user.username, 'Cluster Ready', `Cluster ${this.id}`);
@@ -55,7 +59,6 @@ class Zira {
     });
 
     this.handler.on('command', async (command) => {
-      if (command.msg.author.id !== process.env.OWNER) return;
       if (fs.existsSync(`./commands/${command.command}.js`)) {
         try {
           let guild;

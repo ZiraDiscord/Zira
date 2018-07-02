@@ -20,7 +20,7 @@ exports.Run = async function Run(caller, command, GUILD) {
           caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.title,
-              description: `**${command.prefix}${lang.join.channel[0]}${command.prefix}${lang.join.channel[1]}`,
+              description: `**${command.prefix}${lang.leave.channel[0]}${command.prefix}${lang.leave.channel[1]}`,
               color: caller.color.blue,
             },
           });
@@ -29,21 +29,21 @@ exports.Run = async function Run(caller, command, GUILD) {
         const channel = (command.params[1] === 'stop') ? 'stop' : command.msg.channel.guild.channels.get(command.params[1].replace(/\D/g, ''));
         if (channel) {
           if (channel === 'stop') {
-            guild.joinChannel = '';
+            guild.leaveChannel = '';
             caller.utils.message(command.msg.channel.id, {
               embed: {
                 title: lang.titleComp,
-                description: lang.join.stop,
+                description: lang.leave.stop,
                 color: caller.color.green,
               },
             });
             caller.utils.updateGuild(guild);
           } else {
-            guild.joinChannel = channel.id;
+            guild.leaveChannel = channel.id;
             caller.utils.message(command.msg.channel.id, {
               embed: {
                 title: lang.titleComp,
-                description: lang.join.setChannel[0] + guild.joinChannel + lang.join.setChannel[1],
+                description: lang.leave.setChannel[0] + guild.leaveChannel + lang.leave.setChannel[1],
                 color: caller.color.green,
               },
             });
@@ -66,18 +66,18 @@ exports.Run = async function Run(caller, command, GUILD) {
           caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.title,
-              description: `**${command.prefix}${lang.join.message}\n\n${lang.example}${command.prefix}join message $mention, welcome to $guild!`,
+              description: `**${command.prefix}${lang.leave.message}\n\n${lang.example}${command.prefix}leave message $user left :eyes:`,
               color: caller.color.blue,
             },
           });
           return;
         }
-        const message = command.params.splice(1).join(' ');
-        guild.joinMessage = message;
+        const message = command.params.splice(1).leave(' ');
+        guild.leaveMessage = message;
         caller.utils.message(command.msg.channel.id, {
           embed: {
             title: lang.titleComp,
-            description: lang.join.setMessage + guild.joinMessage,
+            description: lang.leave.setMessage + guild.leaveMessage,
             color: caller.color.green,
           },
         });
@@ -87,8 +87,8 @@ exports.Run = async function Run(caller, command, GUILD) {
     default:
       caller.utils.message(command.msg.channel.id, {
         embed: {
-          title: lang.join.title,
-          description: `**${command.prefix}${lang.join.help[0]}${command.prefix}${lang.join.help[1]}\n\n[${lang.guide}](https://zira.pw/guide/join)`,
+          title: lang.leave.title,
+          description: `**${command.prefix}${lang.leave.help[0]}${command.prefix}${lang.leave.help[1]}\n\n[${lang.guide}](https://zira.pw/guide/leave)`,
           color: caller.color.blue,
         },
       });
