@@ -61,7 +61,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       }
     } else {
       try {
-        message = await caller.utils.message(channel.id, command.params.join(' '));
+        message = await caller.bot.createMessage(channel.id, command.params.join(' '));
       } catch (e) {
         caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
         if (e.code === 50013) {

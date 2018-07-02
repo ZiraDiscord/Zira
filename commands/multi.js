@@ -13,7 +13,7 @@ exports.Run = async function Run(caller, command, GUILD) {
   const guild = GUILD;
   const lang = caller.utils.getLang(guild);
   if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
-    if (!command.emoji || !command.params[1] || !command.params[2]) {
+    if (!command.params[0] || !command.params[1] || !command.params[2]) {
       const ROLES = command.msg.channel.guild.roles.filter(r => r.id !== command.msg.channel.guild.id);
       caller.utils.message(command.msg.channel.id, {
         embed: {

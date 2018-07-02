@@ -49,7 +49,7 @@ exports.Run = async function Run(caller, command, GUILD) {
     Params.forEach((item, index) => {
       if (item.indexOf('<@&') !== -1) Params[index] = item.replace(/\D+/g, '');
     });
-    const [remove] = command.msg.channel.guild.roles.filter(r => r.id === Params[1] || r.name.toLowerCase().indexOf(Params[1].toLowerCase()) !== -1);
+    const [remove] = command.msg.channel.guild.roles.filter(r => r.id === Params[0] || r.name.toLowerCase().indexOf(Params[0].toLowerCase()) !== -1);
     if (!remove) {
       caller.utils.message(command.msg.channel.id, {
         embed: {
@@ -61,8 +61,8 @@ exports.Run = async function Run(caller, command, GUILD) {
       return;
     }
     let add;
-    if (Params[2]) {
-    [add] = command.msg.channel.guild.roles.filter(r => r.id === Params[2] || r.name.toLowerCase().indexOf(Params[2].toLowerCase()) !== -1);
+    if (Params[1]) {
+    [add] = command.msg.channel.guild.roles.filter(r => r.id === Params[1] || r.name.toLowerCase().indexOf(Params[1].toLowerCase()) !== -1);
     if (!add) {
       caller.utils.message(command.msg.channel.id, {
         embed: {
