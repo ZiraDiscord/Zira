@@ -1,0 +1,4 @@
+[submodule "lang"]
+	path = lang
+	url = https://github.com/ZiraDiscord/Translations.git
+	branch = bot
