@@ -50,7 +50,7 @@ exports.Run = async function Run(caller, command, GUILD) {
             embed: {
               title: lang.titleError,
               color: caller.color.yellow,
-              description: lang.unknownRole,
+              description: lang.delete.unknown,
             },
           }).catch(console.error);
           return;
@@ -103,7 +103,7 @@ exports.Run = async function Run(caller, command, GUILD) {
             embed: {
               title: lang.titleError,
               color: caller.color.yellow,
-              description: lang.unknownRole,
+              description: lang.delete.unknown,
             },
           }).catch(console.error);
           return;

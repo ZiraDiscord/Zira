@@ -14,7 +14,7 @@ class ClusterManager {
     this.stats = {};
 
     if (!process.env.TESTING && process.env.ID && process.env.DBL && process.env.DBOT) {
-      setInterval(this.PostStats, 600000);
+      setInterval(this.PostStats, 600000, this);
     }
 
     cluster.on('online', (worker) => {
@@ -158,10 +158,10 @@ class ClusterManager {
     }
   }
 
-  PostStats() {
+  PostStats(self) {
     let count = 0;
-    Object.keys(this.stats).forEach((key) => {
-      count += this.stats[key].guilds;
+    Object.keys(self.stats).forEach((key) => {
+      count += self.stats[key].guilds.length;
     });
     snekfetch.post(`https://discordbots.org/api/bots/${process.env.ID}/stats`)
       .set('Authorization', process.env.DBL)

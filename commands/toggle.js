@@ -69,14 +69,16 @@ exports.Run = async function Run(caller, command, GUILD) {
       }
     }
     const Added = [];
-    for (let i = 0; i < Params.length; i++) {
+    let count = 0;
+    for (const param of Params) {
+      count++;
       // eslint-disable-next-line no-loop-func
-      const [role] = command.msg.channel.guild.roles.filter(r => r.id === Params[i][1] || r.name.toLowerCase().indexOf(Params[i][1].toLowerCase()) !== -1);
+      const [role] = command.msg.channel.guild.roles.filter(r => r.id === param[1] || r.name.toLowerCase().indexOf(param[1].toLowerCase()) !== -1);
       if (!role) {
         caller.utils.message(command.msg.channel.id, {
           embed: {
             title: lang.titleError,
-            description: lang.unknownRole[0] + caller.utils.ordinalSuffix(i + 1) + lang.unknownRole[1],
+            description: lang.unknownRole[0] + caller.utils.ordinalSuffix(count) + lang.unknownRole[1],
             color: caller.color.yellow,
           },
         }).catch(console.error);
@@ -86,7 +88,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       let roleFree = true;
       for (let r = 0; r < guild.roles.length; r++) {
         if (guild.roles[r].msg === guild.emoji) {
-          if (guild.roles[r].emoji === Params[i][0]) emojiFree = false;
+          if (guild.roles[r].emoji === param[0]) emojiFree = false;
           if (guild.roles[r].id === role.id) roleFree = false;
         }
       }
@@ -94,7 +96,7 @@ exports.Run = async function Run(caller, command, GUILD) {
         caller.utils.message(command.msg.channel.id, {
           embed: {
             title: lang.titleError,
-            description: lang.add.emoji[0] + Params[i][0] + lang.add.emoji[1],
+            description: lang.add.emoji[0] + param[0] + lang.add.emoji[1],
             color: caller.color.yellow,
           },
         }).catch(console.error);
@@ -110,15 +112,17 @@ exports.Run = async function Run(caller, command, GUILD) {
         }).catch(console.error);
         break;
       }
+      let res;
       try {
-        await caller.bot.addMessageReaction(guild.chan, guild.emoji, Params[i][0].replace(/(<:)|(<)|(>)/g, ''));
+        console.log(param);
+        res = await caller.bot.addMessageReaction(guild.chan, guild.emoji, param[0].replace(/(<:)|(<)|(>)/g, ''));
       } catch (e) {
         caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
         if (e.code === 50001) {
           caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.titleError,
-              description: lang.add.cannotRead[0] + Params[i][0] + lang.add.cannotRead[1] + guild.chan + lang.add.cannotRead[2],
+              description: lang.add.cannotRead[0] + param[0] + lang.add.cannotRead[1] + guild.chan + lang.add.cannotRead[2],
               color: caller.color.yellow,
             },
           }).catch(console.error);
@@ -126,7 +130,7 @@ exports.Run = async function Run(caller, command, GUILD) {
           caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.titleError,
-              description: lang.add.cannotReact[0] + Params[i][0] + lang.add.cannotReact[1] + guild.chan + lang.add.cannotReact[2],
+              description: lang.add.cannotReact[0] + param[0] + lang.add.cannotReact[1] + guild.chan + lang.add.cannotReact[2],
               color: caller.color.yellow,
             },
           }).catch(console.error);
@@ -134,7 +138,7 @@ exports.Run = async function Run(caller, command, GUILD) {
           caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.titleError,
-              description: lang.unknownEmoji[0] + caller.utils.ordinalSuffix(i + 1) + lang.unknownEmoji[1],
+              description: lang.unknownEmoji[0] + caller.utils.ordinalSuffix(count) + lang.unknownEmoji[1],
               color: caller.color.yellow,
             },
           }).catch(console.error);
@@ -142,23 +146,25 @@ exports.Run = async function Run(caller, command, GUILD) {
           caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.titleError,
-              description: `${lang.add.unknown[0]}${Params[i][0]}${lang.add.unknown[1]}${guild.chan}>`,
+              description: `${lang.add.unknown[0]}${param[0]}${lang.add.unknown[1]}${guild.chan}>`,
               color: caller.color.yellow,
             },
           }).catch(console.error);
         }
         break;
       }
+      console.log(res);
       Added.push({
         id: role.id,
-        emoji: Params[i][0],
+        emoji: param[0],
       });
       guild.roles.push({
         id: role.id,
         name: role.name,
-        emoji: Params[i][0],
+        emoji: param[0],
         msg: guild.emoji,
         channel: guild.chan,
+        toggle: true,
       });
     }
     let description = '';

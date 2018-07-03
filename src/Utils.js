@@ -134,7 +134,7 @@ class Utils {
       lang,
     } = guild;
     if (!guild.lang) lang = 'en';
-    if (!fs.existsSync(`../lang/${lang}.json`)) lang = 'en';
+    if (!fs.existsSync(`./lang/${lang}.json`)) lang = 'en';
     try {
       return require(`../lang/${lang}.json`); // eslint-disable-line
     } catch (e) {

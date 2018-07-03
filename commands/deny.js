@@ -102,6 +102,7 @@ exports.Run = async function Run(caller, command, GUILD) {
     caller.bot.editMessage(guild.suggestion, message.id, {
       embed,
     }).catch(console.error);
+    if (command.msg.channel.guild.members.get(caller.bot.user.id).permission.has('manageMessages')) caller.bot.deleteMessage(command.msg.channel.id, command.msg.id).catch(console.error);
     const [suggestion] = guild.suggestions.filter(s => s.message === id);
     if (suggestion && guild.suggestionDM) {
       const channel = await caller.bot.getDMChannel(suggestion.user);

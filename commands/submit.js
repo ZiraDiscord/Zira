@@ -90,6 +90,7 @@ exports.Run = async function Run(caller, command, GUILD) {
       channel: guild.suggestion,
     });
     caller.utils.updateGuild(guild);
+    if (command.msg.channel.guild.members.get(caller.bot.user.id).permission.has('manageMessages')) caller.bot.deleteMessage(command.msg.channel.id, command.msg.id).catch(console.error);
   }
 };
 
