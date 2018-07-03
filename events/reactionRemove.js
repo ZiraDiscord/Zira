@@ -32,7 +32,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       }
       try {
         await user.edit({
-          roles: userRoles,
+          roles: user.roles,
         }, 'Reaction Role');
       } catch (e) {
         console.error(e);
