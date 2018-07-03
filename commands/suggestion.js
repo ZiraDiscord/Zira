@@ -176,6 +176,16 @@ exports.Run = async function Run(caller, command, GUILD) {
         }
       case 'dm':
         {
+          if (!guild.premium && process.env.PREMIUM) {
+            caller.utils.message(command.msg.channel.id, {
+              embed: {
+                color: caller.color.yellow,
+                title: lang.titleError,
+                description: lang.premium,
+              },
+            }).catch(console.error);
+            return;
+          }
           guild.suggestionDM = guild.suggestionDM !== true;
           caller.utils.message(command.msg.channel.id, {
             embed: {

@@ -44,6 +44,17 @@ exports.Run = async function Run(caller, command, GUILD) {
       }).catch(console.error);
       return;
     }
+    const removeCount = guild.roles.filter(r => r.remove).length;
+    if (!guild.premium && removeCount > 7 && process.env.PREMIUM) {
+      caller.utils.message(command.msg.channel.id, {
+        embed: {
+          title: lang.titleError,
+          description: lang.remove.limit,
+          color: caller.color.yellow,
+        },
+      }).catch(console.error);
+      return;
+    }
     const emoji = command.params[0];
     const Params = command.params.splice(1).join(' ').split(', ');
     Params.forEach((item, index) => {
