@@ -58,22 +58,24 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       console.error(e);
       return;
     }
-    caller.utils.message(guild.log, {
-      embed: {
-        footer: {
-          text: `${user.username}#${user.discriminator}`,
-          icon_url: user.avatarURL,
+    if (guild.log) {
+      caller.utils.message(guild.log, {
+        embed: {
+          footer: {
+            text: `${user.username}#${user.discriminator}`,
+            icon_url: user.avatarURL,
+          },
+          color: 0xb31414,
+          description: `<@${user.id}>${lang.log.remove[0]}${role.emoji}${lang.log.remove[1]}<@&${role.id}>`,
+          timestamp: new Date(),
         },
-        color: 0xb31414,
-        description: `<@${user.id}>${lang.log.remove[0]}${role.emoji}${lang.log.remove[1]}<@&${role.id}>`,
-        timestamp: new Date(),
-      },
-    }).catch((e) => {
-      console.error(e);
-      if (e.code === 50013 || e.code === 50001) {
-        guild.log = '';
-        caller.utils.updateGuild(guild);
-      }
-    });
+      }).catch((e) => {
+        console.error(e);
+        if (e.code === 50013 || e.code === 50001) {
+          guild.log = '';
+          caller.utils.updateGuild(guild);
+        }
+      });
+    }
   }
 };

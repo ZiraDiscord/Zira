@@ -122,23 +122,25 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
         console.error(e);
         return;
       }
-      self.bot.createMessage(guild.log, {
-        embed: {
-          footer: {
-            text: `${user.username}#${user.discriminator}`,
-            icon_url: user.avatarURL,
+      if (guild.log) {
+        self.bot.createMessage(guild.log, {
+          embed: {
+            footer: {
+              text: `${user.username}#${user.discriminator}`,
+              icon_url: user.avatarURL,
+            },
+            color: 0x00d62e,
+            description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${lang.log.give[1]}<@&${role.id}>`,
+            timestamp: new Date(),
           },
-          color: 0x00d62e,
-          description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${lang.log.give[1]}<@&${role.id}>`,
-          timestamp: new Date(),
-        },
-      }).catch((e) => {
-        console.error(e);
-        if (e.code === 50013 || e.code === 50001) {
-          guild.log = '';
-          self.utils.updateGuild(guild);
-        }
-      });
+        }).catch((e) => {
+          console.error(e);
+          if (e.code === 50013 || e.code === 50001) {
+            guild.log = '';
+            self.utils.updateGuild(guild);
+          }
+        });
+      }
       return; // eslint-disable-line
     }
   }
