@@ -22,17 +22,13 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       if (position > highestRole) highestRole = position;
     });
     if (role.id) {
-      const {
-        position,
-      } = message.channel.guild.roles.get(role.id);
-      if (position >= highestRole) return;
+      const ROLECHECK = message.channel.guild.roles.get(role.id);
+      if (!ROLECHECK || ROLECHECK.position >= highestRole) return;
     } else if (role.ids) {
       let higher = false;
       role.ids.forEach((id) => {
-        const {
-          position,
-        } = message.channel.guild.roles.get(id);
-        if (position >= highestRole) higher = true;
+        const ROLECHECK = message.channel.guild.roles.get(id);
+        if (!ROLECHECK || ROLECHECK.position >= highestRole) higher = true;
       });
       if (higher) return;
     }
