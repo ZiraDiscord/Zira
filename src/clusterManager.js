@@ -13,7 +13,8 @@ class ClusterManager {
     this.queue = new Map();
     this.stats = {};
 
-    if (!process.env.TESTING && process.env.ID && process.env.DBL && process.env.DBOT) {
+    if (process.env.ID && process.env.DBL && process.env.DBOT) {
+      logger.Info('Cluster', 'Posting', '600000ms');
       setInterval(this.PostStats, 600000, this);
     }
 
@@ -163,6 +164,7 @@ class ClusterManager {
     Object.keys(self.stats).forEach((key) => {
       count += self.stats[key].guilds.length;
     });
+    logger.Info('Cluster', 'Post', `Count: ${count}`);
     snekfetch.post(`https://discordbots.org/api/bots/${process.env.ID}/stats`)
       .set('Authorization', process.env.DBL)
       .send({
