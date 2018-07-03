@@ -18,10 +18,18 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       if (claimedUser.claimed.indexOf(role.id) !== -1) return;
     }
     if (role.multi) {
-      const userRoles = user.roles;
-      user.roles.forEach((id) => {
-        if (role.ids.indexOf(id) !== -1) userRoles.splice(userRoles.indexOf(id), 1);
+      let userRoles = [];
+      await user.roles.forEach((id, index) => {
+        if (role.ids.indexOf(id) !== -1) {
+          userRoles.push(index);
+        }
       });
+      if (userRoles.length) {
+        userRoles = userRoles.reverse();
+        userRoles.forEach((i) => {
+          user.roles.splice(i, 1);
+        });
+      }
       try {
         await user.edit({
           roles: userRoles,
