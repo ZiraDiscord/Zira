@@ -105,7 +105,7 @@ exports.Run = async function Run(caller, command, GUILD) {
               pos = index;
               old = item;
               found = true;
-            } else if (item.ida && item.ids.indexOf(role.id) !== -1 && item.msg === command.params[0]) {
+            } else if (item.ids && item.ids.indexOf(role.id) !== -1 && item.msg === command.params[0]) {
               pos = index;
               old = item;
               found = true;
