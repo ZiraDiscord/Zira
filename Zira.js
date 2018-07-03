@@ -85,7 +85,6 @@ class Zira {
     this.bot.on('messageReactionAdd', async (message, emoji, user) => {
       if (!message.channel.guild) return;
       if (user === this.bot.user.id) return;
-      if (process.env.TESTING) return;
       try {
         const Handler = require('./events/reactionAdd.js'); // eslint-disable-line
         Handler.Run(this, message, emoji, user);
@@ -99,7 +98,6 @@ class Zira {
     this.bot.on('messageReactionRemove', async (message, emoji, user) => {
       if (!message.channel.guild) return;
       if (user === this.bot.user.id) return;
-      if (process.env.TESTING) return;
       try {
         const Handler = require('./events/reactionRemove.js'); // eslint-disable-line
         Handler.Run(this, message, emoji, user);
@@ -133,7 +131,6 @@ class Zira {
     });
 
     this.bot.on('guildMemberAdd', async (guild, member) => {
-      if (process.env.TESTING) return;
       try {
         const Handler = require('./events/guildMemberAdd.js'); // eslint-disable-line
         Handler.Run(this, guild, member, await this.utils.getGuild(guild.id));
@@ -145,7 +142,6 @@ class Zira {
     });
 
     this.bot.on('guildMemberRemove', async (guild, member) => {
-      if (process.env.TESTING) return;
       try {
         const Handler = require('./events/guildMemberRemove.js'); // eslint-disable-line
         Handler.Run(this, guild, member, await this.utils.getGuild(guild.id));
@@ -157,7 +153,6 @@ class Zira {
     });
 
     this.bot.on('guildMemberUpdate', async (guild, member, old) => {
-      if (process.env.TESTING) return;
       try {
         const Handler = require('./events/guildMemberUpdate.js'); // eslint-disable-line
         Handler.Run(this, guild, member, old);
@@ -169,7 +164,6 @@ class Zira {
     });
 
     this.bot.on('rawWS', async (packet) => {
-      if (process.env.TESTING) return;
       if (packet.t !== 'MESSAGE_DELETE' && packet.t !== 'MESSAGE_DELETE_BULK') return;
       try {
         const Handler = require('./events/messageDelete.js'); // eslint-disable-line
