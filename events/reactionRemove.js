@@ -10,6 +10,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
   const user = message.channel.guild.members.get(_user);
   const lang = caller.utils.getLang(guild);
   if (role) {
+    if (role.remove) return;
     if (!me.permission.has('manageRoles')) return;
     const [claimedUser] = await caller.db.Find('once', {
       id: _user,
