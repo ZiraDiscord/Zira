@@ -99,21 +99,14 @@ exports.Run = async function Run(caller, command, GUILD) {
         value: reason,
       }];
     }
-    if (guild.approveChannel) {
+    if (guild.moveChannel) {
       try {
-        caller.utils.message(guild.approveChannel, {
+        caller.utils.message(guild.moveChannel, {
           embed,
         });
       } catch (e) {
         caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.approve.read[0] + guild.suggestion + lang.approve.read[1],
-            color: caller.color.yellow,
-          },
-        });
-        guild.approveChannel = '';
+        guild.moveChannel = '';
         caller.utils.updateGuild(guild);
       }
     }

@@ -99,6 +99,17 @@ exports.Run = async function Run(caller, command, GUILD) {
         value: reason,
       }];
     }
+    if (guild.moveChannel) {
+      try {
+        caller.utils.message(guild.moveChannel, {
+          embed,
+        });
+      } catch (e) {
+        caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
+        guild.moveChannel = '';
+        caller.utils.updateGuild(guild);
+      }
+    }
     caller.bot.editMessage(guild.suggestion, message.id, {
       embed,
     }).catch(console.error);

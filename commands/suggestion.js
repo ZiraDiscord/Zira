@@ -118,7 +118,7 @@ exports.Run = async function Run(caller, command, GUILD) {
           caller.utils.updateGuild(guild);
           break;
         }
-      case 'approve':
+      case 'move':
         {
           if (!guild.premium && process.env.PREMIUM) {
             caller.utils.message(command.msg.channel.id, {
@@ -135,18 +135,18 @@ exports.Run = async function Run(caller, command, GUILD) {
               embed: {
                 color: caller.color.blue,
                 title: lang.title,
-                description: `**${command.prefix}${lang.suggestion.approve.help[0]}${command.prefix}${lang.suggestion.approve.help[1]}`,
+                description: `**${command.prefix}${lang.suggestion.move.help[0]}${command.prefix}${lang.suggestion.move.help[1]}`,
               },
             }).catch(console.error);
             return;
           }
           const channel = command.msg.channel.guild.channels.get(command.params[1].replace(/\D/g, ''));
           if (command.params[1] === 'disable') {
-            guild.approveChannel = '';
+            guild.moveChannel = '';
             caller.utils.message(command.msg.channel.id, {
               embed: {
                 title: lang.titleComp,
-                description: lang.suggestion.stop,
+                description: lang.suggestion.move.disable,
                 color: caller.color.green,
               },
             }).catch(console.error);
@@ -163,11 +163,11 @@ exports.Run = async function Run(caller, command, GUILD) {
             }).catch(console.error);
             return;
           }
-          guild.approveChannel = channel.id;
+          guild.moveChannel = channel.id;
           caller.utils.message(command.msg.channel.id, {
             embed: {
               title: lang.titleComp,
-              description: `${lang.suggestion.approve.set}${guild.approveChannel}>`,
+              description: `${lang.suggestion.move.set}${guild.moveChannel}>`,
               color: caller.color.green,
             },
           }).catch(console.error);
