@@ -90,7 +90,7 @@ exports.Run = async function Run(caller, command, GUILD) {
     } else {
       let role;
       if (command.params[1].indexOf('<@&') !== -1 || isNaN(command.params[1]) === false) { // eslint-disable-line
-        [role] = command.msg.channel.guild.roles.get(command.params[1].replace(/\D/g, ''));
+        role = command.msg.channel.guild.roles.get(command.params[1].replace(/\D/g, ''));
       } else {
         const name = command.params.splice(1).join(' ').toLowerCase();
         [role] = command.msg.channel.guild.roles.filter(r => r.name.toLowerCase() === name);
