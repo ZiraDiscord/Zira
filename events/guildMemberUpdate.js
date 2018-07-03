@@ -1,7 +1,7 @@
 'use strict';
 
 exports.Run = async function Run(caller, guild, member, old) {
-  const oldRoles = old.roles;
+  const oldRoles = (old.roles) ? old.roles : [];
   const newRoles = member.roles.map(r => r.id);
   const [claimedUser] = await caller.db.Find('once', {
     id: member.user.id,

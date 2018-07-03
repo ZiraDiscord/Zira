@@ -72,7 +72,7 @@ exports.Run = async function Run(caller, command, GUILD) {
           });
           return;
         }
-        const message = command.params.splice(1).leave(' ');
+        const message = command.params.splice(1).join(' ');
         guild.leaveMessage = message;
         caller.utils.message(command.msg.channel.id, {
           embed: {
