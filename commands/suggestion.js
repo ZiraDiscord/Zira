@@ -382,7 +382,7 @@ exports.Run = async function Run(caller, command, GUILD) {
             } else if (lists[numeral(message.content).value()]) {
               const list = lists[numeral(message.content).value()];
               guild.trello = {
-                board: command.params[0],
+                board: command.params[1],
                 list: list.id,
                 name: list.name,
                 enabled: true,
