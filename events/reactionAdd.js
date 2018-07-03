@@ -8,12 +8,34 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
   const [role] = guild.roles.filter(r => r.msg === _message.id && (r.emoji === _emoji.name || r.emoji.indexOf(_emoji.id) !== -1));
   const emoji = (_emoji.id === null) ? _emoji.name : `${(_emoji.animated) ? '<a:' : '<:'}${_emoji.name}:${_emoji.id}>`;
   const message = await self.bot.getMessage(_message.channel.id, _message.id).catch(console.error);
-  const me = _message.channel.guild.members.get(self.bot.user.id);
+  const me = message.channel.guild.members.get(self.bot.user.id);
   const user = message.channel.guild.members.get(_user);
   const lang = self.utils.getLang(guild.lang);
   let claimed = false;
   if (role) {
     if (!me.permission.has('manageRoles')) return;
+    let highestRole = 0;
+    me.roles.forEach((id) => {
+      const {
+        position,
+      } = message.channel.guild.roles.get(id);
+      if (position > highestRole) highestRole = position;
+    });
+    if (role.id) {
+      const {
+        position,
+      } = message.channel.guild.roles.get(role.id);
+      if (position >= highestRole) return;
+    } else if (role.ids) {
+      let higher = false;
+      role.ids.forEach((id) => {
+        const {
+          position,
+        } = message.channel.guild.roles.get(id);
+        if (position >= highestRole) higher = true;
+      });
+      if (higher) return;
+    }
     if (role.toggle) {
       const toggleEmojis = guild.roles.filter(r => r.msg === _message.id && r.toggle === true && r.id !== role.id).map(r => r.emoji);
       if (self.userRateLimits[_user] !== undefined) {

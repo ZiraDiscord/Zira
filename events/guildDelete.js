@@ -14,4 +14,11 @@ exports.Run = async function Run(caller, guild) {
       timestamp: new Date(),
     }],
   }).catch(console.error);
+  const [guilds] = await caller.db.Find('shards', {
+    id: 0,
+  });
+  guilds[`guilds_${caller.id}`] = caller.bot.guilds.map(g => g.id);
+  caller.db.Update('shards', {
+    id: 0,
+  }, guilds);
 };

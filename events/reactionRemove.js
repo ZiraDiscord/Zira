@@ -17,6 +17,28 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
     if (claimedUser) {
       if (claimedUser.claimed.indexOf(role.id) !== -1) return;
     }
+    let highestRole = 0;
+    me.roles.forEach((id) => {
+      const {
+        position,
+      } = message.channel.guild.roles.get(id);
+      if (position > highestRole) highestRole = position;
+    });
+    if (role.id) {
+      const {
+        position,
+      } = message.channel.guild.roles.get(role.id);
+      if (position >= highestRole) return;
+    } else if (role.ids) {
+      let higher = false;
+      role.ids.forEach((id) => {
+        const {
+          position,
+        } = message.channel.guild.roles.get(id);
+        if (position >= highestRole) higher = true;
+      });
+      if (higher) return;
+    }
     if (role.multi) {
       let userRoles = [];
       await user.roles.forEach((id, index) => {
