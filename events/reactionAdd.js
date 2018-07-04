@@ -42,7 +42,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       if (me.permission.has('manageMessages')) {
         const ReactionKeys = Object.keys(message.reactions);
         ReactionKeys.forEach((i, index) => {
-          if (toggleEmojis.indexOf(i) !== -1) {
+          if (toggleEmojis.indexOf(i) !== -1 || toggleEmojis.filter(e => e.indexOf(i) !== -1)[0]) {
             setTimeout(() => {
               message.removeReaction(i, _user).catch(console.error);
             }, 100 * index);
