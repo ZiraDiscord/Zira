@@ -10,7 +10,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
   const message = await self.bot.getMessage(_message.channel.id, _message.id).catch(console.error);
   const me = message.channel.guild.members.get(self.bot.user.id);
   const user = message.channel.guild.members.get(_user);
-  const lang = self.utils.getLang(guild.lang);
+  const lang = self.utils.getLang(guild);
   let claimed = false;
   if (role) {
     if (!me.permission.has('manageRoles')) return;

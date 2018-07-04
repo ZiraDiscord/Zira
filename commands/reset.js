@@ -11,7 +11,7 @@ exports.Run = async function Run(caller, command, GUILD) {
     return;
   }
   let guild = GUILD;
-  const lang = caller.utils.getLang(guild.lang);
+  const lang = caller.utils.getLang(guild);
   if (command.msg.author.id === process.env.OWNER || command.msg.author.id === command.msg.channel.guild.ownerID) {
     caller.utils.message(command.msg.channel.id, {
       embed: {

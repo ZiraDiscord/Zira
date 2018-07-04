@@ -29,7 +29,7 @@ exports.Run = async function Run(caller, command, GUILD) {
     return;
   }
   const guild = GUILD;
-  let lang = caller.utils.getLang(guild.lang);
+  let lang = caller.utils.getLang(guild);
   if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageGuild')) {
     const code = (command.params[0]) ? Sanitize(command.params[0]) : 'thisisntalanguage';
     if (fs.existsSync(`./lang/${code}.json`)) {

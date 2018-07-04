@@ -11,7 +11,7 @@ exports.Run = async function Run(caller, command, GUILD) {
     return;
   }
   const guild = GUILD;
-  const lang = caller.utils.getLang(guild.lang);
+  const lang = caller.utils.getLang(guild);
   if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageGuild')) {
     if (!command.params[0]) {
       caller.utils.message(command.msg.channel.id, {
