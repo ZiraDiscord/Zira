@@ -16,4 +16,6 @@
 
 4. Copy `pm2.example.json` to `pm2.json` and fill in the env variables
 
-5. Start the bot with `pm2 start pm2.json`
+5. Run `git submodule init` and `git submodule update` to get the language files
+
+6. Start the bot with `pm2 start pm2.json`
