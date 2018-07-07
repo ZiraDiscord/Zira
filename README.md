@@ -1,3 +1,8 @@
+# Public Bot
+Original Zira is shutted down.<br/>
+There is an inofficial public Zira maintained and hosted by [Cryptix#0001](https://github.com/crypti-x).<br/>
+See https://zara.discord.id
+
 # Prerequisites
 [MongoDB](https://www.mongodb.com/)
 
