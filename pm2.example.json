@@ -14,7 +14,6 @@
       "WEBHOOK_TOKEN": "webhook token for guild logging",
       "TRELLO_KEY":"trello key",
       "TRELLO_TOKEN":"trello token",
-      "TRELLO_ID":"trello id even though im pretty sure i didnt use this",
       "SHARDS": 1,
       "CLUSTERS": 1
     }
