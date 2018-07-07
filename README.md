@@ -1,4 +1,5 @@
-# Prerequisites
+# Install Guide
+## Prerequisites
 [MongoDB](https://www.mongodb.com/)
 
 [Node JS](https://nodejs.org)
