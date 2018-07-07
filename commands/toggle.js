@@ -44,17 +44,6 @@ exports.Run = async function Run(caller, command, GUILD) {
       }).catch(console.error);
       return;
     }
-    const toggleCount = guild.roles.filter(r => r.toggle).length;
-    if (!guild.premium && toggleCount > 11 && process.env.PREMIUM) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.titleError,
-          description: lang.toggle.limit,
-          color: caller.color.yellow,
-        },
-      }).catch(console.error);
-      return;
-    }
     const Params = caller.utils.parseParams(command.params);
     if ((toggleCount + Params.length) > 11) {
       if (!guild.premium && toggleCount > 11 && process.env.PREMIUM) {

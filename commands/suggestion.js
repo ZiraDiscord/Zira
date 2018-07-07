@@ -64,16 +64,6 @@ exports.Run = async function Run(caller, command, GUILD) {
         }
       case 'submit':
         {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
           if (!command.params[1]) {
             caller.utils.message(command.msg.channel.id, {
               embed: {
@@ -120,16 +110,6 @@ exports.Run = async function Run(caller, command, GUILD) {
         }
       case 'move':
         {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
           if (!command.params[1]) {
             caller.utils.message(command.msg.channel.id, {
               embed: {
@@ -176,16 +156,6 @@ exports.Run = async function Run(caller, command, GUILD) {
         }
       case 'dm':
         {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
           guild.suggestionDM = guild.suggestionDM !== true;
           caller.utils.message(command.msg.channel.id, {
             embed: {
@@ -261,16 +231,6 @@ exports.Run = async function Run(caller, command, GUILD) {
         }
       case 'trello':
         {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
           if (!command.params[1]) {
             caller.utils.message(command.msg.channel.id, {
               embed: {
