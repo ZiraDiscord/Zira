@@ -1,0 +1,22 @@
+{
+  "apps": [{
+    "name": "Zira",
+    "script": "./Cluster.js",
+    "exec_interpreter": "node",
+    "env": {
+      "PREFIX": "your desired prefix here",
+      "TOKEN": "your bot token here",
+      "OWNER": "your user id here",
+      "DB_USER": "mongo username",
+      "DB_PASS": "mongo password",
+      "DB_HOST": "mongo host/collection",
+      "WEBHOOK_ID": "webhook id for guild logging",
+      "WEBHOOK_TOKEN": "webhook token for guild logging",
+      "TRELLO_KEY":"trello key",
+      "TRELLO_TOKEN":"trello token",
+      "TRELLO_ID":"trello id even though im pretty sure i didnt use this",
+      "SHARDS": 1,
+      "CLUSTERS": 1
+    }
+  }]
+}
