@@ -1,3 +1,6 @@
+# Update
+Zira is getting revived. Along with this revive there will be a rewrite of the bot and [dashboard](https://zira.pw)
+For updates join the [support guild](https://zira.pw/support)
 # Install Guide
 ## Prerequisites
 [MongoDB](https://www.mongodb.com/)
