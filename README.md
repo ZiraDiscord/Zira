@@ -1,6 +1,12 @@
+# Zira
+[![discord](https://discordapp.com/api/guilds/532372609476591626/widget.png?style=shield)](https://zira.pw/support)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/765b4d42b5b74bbc853a8d8da7b695e9)](https://www.codacy.com/app/Zira/Zira?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZiraDiscord/Zira&amp;utm_campaign=Badge_Grade)
+
 # Update
-Zira is getting revived. Along with this revive there will be a rewrite of the bot and [dashboard](https://zira.pw)
-For updates join the [support guild](https://zira.pw/support)
+Zira is getting revived. Along with this revive there will be a rewrite of the bot and [dashboard](https://zira.pw).
+
+For updates join the [support guild](https://zira.pw/support).
+
 # Install Guide
 ## Prerequisites
 [MongoDB](https://www.mongodb.com/)
