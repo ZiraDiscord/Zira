@@ -25,10 +25,8 @@ class CommandHandler extends EventEmitter {
     if (!msg.channel.guild) {
       return this.prefix;
     }
-    let guild = await this.db.Find('reaction', {
-      id: msg.channel.guild.id,
-    });
-    [guild] = guild;
+    const guilds = await this.db.get('reaction');
+    const guild = await guilds.findOne({ id: msg.channel.guild.id });
     if (guild) {
       if (guild.prefix) {
         return guild.prefix;

@@ -1,36 +1,100 @@
 'use strict';
 
-const Logger = require('disnode-logger');
 const fs = require('fs');
+const logger = require('./logger');
+const DB = require('./DB');
+
+/**
+ * @typedef {Object} Permissions
+ * @property {boolean} hasPermissions User has all permissions or not
+ * @property {Array} missing Array of missing permissions
+ */
 
 class Utils {
+  /**
+ * @constructor
+ * @param {Object} caller - this of Zira.js
+ * @param {Object} caller.bot - Eris client
+ */
   constructor(caller) {
-    this.db = caller.db;
+    this.db = DB;
     this.bot = caller.bot;
     this.caller = caller;
+    this.schema();
   }
 
-  async message(channel, content) {
+  /**
+   * Make sure all collections are in the database
+   */
+  async schema() {
+    await this.db.create('reaction');
+    await this.db.create('once');
+    const changelog = await this.db.create('changelog');
+    const log = await changelog.findOne({ id: 0 });
+    if (!log) {
+      await changelog.insert({ id: 0, version: '0.0.0', changes: false, changelog: '' });
+    }
+    const shards = await this.db.create('shards');
+    const doc = await shards.findOne({ id: 0 });
+    if (!doc) {
+      await shards.insert({ id: 0, guilds_0: [] });
+    }
+  }
+
+  /**
+   * Send a message to a channel
+   * @async
+   * @param {snowflake} channel - Channel ID
+   * @param {Object|string} content - Embed or String
+   */
+  async createMessage(channel, content) {
     try {
       await this.bot.createMessage(channel, content);
     } catch (e) {
-      this.caller.Logger.Warning('Message', ` ${channel} `, e.message.replace(/\n\s/g, ''));
+      logger.warn(
+        `[Message Error] ${channel} ${e.message.replace(/\n\s/g, '')}`,
+      );
       if (e.code === 50013) {
-        this.bot.createMessage(channel, 'I\'m unable to send the message as I\'m missing the permission `Embed Links` in this channel.').catch(err => this.caller.Logger.Warning('Error Message', ` ${channel} `, err.message.replace(/\n\s/g, '')));
+        this.bot
+          .createMessage(
+            channel,
+            "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.",
+          )
+          .catch((err) => {
+            logger.warn(
+              `[Message Error] ${channel} ${err.message.replace(/\n\s/g, '')}`,
+            );
+          });
       }
     }
   }
 
+  /**
+   * Get the date from a snowflake
+   * @param {snowflake} resourceID - User/Guild/Channel/Message ID
+   * @returns {Date} Date of snowflakes creation
+   */
   snowflakeDate(resourceID) {
     return new Date(parseInt(resourceID) / 4194304 + 1420070400000); // eslint-disable-line
   }
 
+  /**
+   * Returns random number
+   * @param {number} min - Minimum number
+   * @param {number} max - Maximum number
+   * @returns {number} Random number between min and max
+   */
   randomNumber(min, max) {
     const first = Math.ceil(min);
     const second = Math.floor(max);
-    return Math.floor(Math.random() * ((second - first) + 1)) + first;
+    return Math.floor(Math.random() * (second - first + 1)) + first;
   }
 
+  /**
+   * Get time between now and a date
+   * @param {Date} time - Date
+   * @returns {string} Formatted date
+   */
   getTime(time) {
     const currentTime = new Date();
     const elapsed = currentTime - time;
@@ -38,7 +102,7 @@ class Utils {
     let days = 0;
     let hours = 0;
     let minutes = 0;
-    let seconds = parseInt(elapsed / 1000); // eslint-disable-line
+    let seconds = parseInt(elapsed / 1000, 10);
     while (seconds >= 60) {
       minutes++;
       seconds -= 60;
@@ -100,45 +164,38 @@ class Utils {
   }
 
   ordinalSuffix(i) {
-    if ((i % 10) === 1 && (i % 100) !== 11) {
+    if (i % 10 === 1 && i % 100 !== 11) {
       return `${i}st`;
     }
-    if ((i % 10) === 2 && (i % 100) !== 12) {
+    if (i % 10 === 2 && i % 100 !== 12) {
       return `${i}nd`;
     }
-    if ((i % 10) === 3 && (i % 100) !== 13) {
+    if (i % 10 === 3 && i % 100 !== 13) {
       return `${i}rd`;
     }
     return `${i}th`;
   }
 
-  combine(First, Second) {
-    const res = [];
-    const arr = First.concat(Second);
-    let I = arr.length;
-    const Obj = {};
-    while (I--) {
-      const item = arr[I];
-      if (!Obj[item]) {
-        res.unshift(item);
-        Obj[item] = true;
-      }
-    }
-    return res;
-  }
-
-  getLang(guild = { // eslint-disable-line
-    lang: 'en',
-  }) {
-    let {
-      lang,
-    } = guild;
+  /**
+   * Get language file
+   * @param {Object} guild - Guild object
+   * @param {string} guild.lang - Language code
+   */
+  // eslint-disable-next-line consistent-return
+  getLang(
+    guild = {
+      lang: 'en',
+    },
+  ) {
+    let { lang } = guild;
     if (!guild.lang) lang = 'en';
     if (!fs.existsSync(`./lang/${lang}.json`)) lang = 'en';
     try {
       return require(`../lang/${lang}.json`); // eslint-disable-line
     } catch (e) {
-      Logger.Error('Utils', 'getLang', `Error when getting file: ${lang} :: ${e}`);
+      logger.error(
+        `[Lang Error] Error when getting file: ${lang} :: ${JSON.stringify(e)}`,
+      );
     } finally {
       delete require.cache[require.resolve(`../lang/${lang}.json`)];
     }
@@ -158,12 +215,15 @@ class Utils {
     return params;
   }
 
+  /**
+   * Get guild from Mongo
+   * @async
+   * @param {snowflake} id - Guild ID
+   * @returns {Object} Guild object
+   */
   async getGuild(id) {
-    const self = this;
-    let guild = await self.db.Find('reaction', {
-      id,
-    });
-    [guild] = guild;
+    const guilds = await this.db.get('reaction');
+    let guild = await guilds.findOne({ id });
     if (!guild) {
       guild = {
         id,
@@ -171,19 +231,25 @@ class Utils {
         msgid: [],
         chan: '',
       };
-      self.db.Insert('reaction', guild);
+      guilds.insert(guild);
     }
     return guild;
   }
 
+  /**
+   * Update guild object
+   * @async
+   * @param {Object} guild - Guild object
+   */
   async updateGuild(guild) {
-    const self = this;
-    const {
-      id,
-    } = guild;
-    await self.db.Update('reaction', {
-      id,
-    }, guild);
+    const guilds = await this.db.get('reaction');
+    await guilds.findOneAndUpdate({ id: guild.id }, guild);
+  }
+
+  async getChangelog() {
+    const changelog = await this.db.get('changelog');
+    const res = await changelog.findOne({ id: 0 });
+    return res;
   }
 
   mapObj(map) {
@@ -200,15 +266,33 @@ class Utils {
       data: {
         messages: caller.handler.seen,
         commands: caller.handler.commands,
-        users: caller.bot.users.filter(u => !u.bot).length,
-        bots: caller.bot.users.filter(u => u.bot).length,
-        guilds: caller.bot.guilds.map(g => g.id),
+        users: caller.bot.users.filter((u) => !u.bot).length,
+        bots: caller.bot.users.filter((u) => u.bot).length,
+        guilds: caller.bot.guilds.map((g) => g.id),
         memory: (process.memoryUsage().rss / 1024 / 1024).toFixed(2),
         uptime: caller.utils.getTime(caller.bot.startTime),
         cluster: caller.id,
         shards: caller.bot.shards.size,
       },
     });
+  }
+
+  /**
+   * Checks user permissions
+   * @param {Object} userPermissions - Object of user permissions
+   * @param {Array} permissionsToCheck - Array of permissions to check
+   * @returns {Permissions}
+   */
+  checkPermissions(userPermissions, permissionsToCheck) {
+    let hasPermission = true;
+    const missing = [];
+    permissionsToCheck.forEach((permission) => {
+      if (!userPermissions[permission]) {
+        hasPermission = false;
+        missing.push(permission);
+      }
+    });
+    return { hasPermission, missing };
   }
 }
 

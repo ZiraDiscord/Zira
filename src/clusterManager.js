@@ -1,7 +1,7 @@
 'use strict';
 
-const logger = require('disnode-logger');
-const snekfetch = require('snekfetch');
+const request = require('request');
+const logger = require('./logger');
 
 class ClusterManager {
   constructor(cluster, shards, clusters) {
@@ -14,7 +14,7 @@ class ClusterManager {
     this.stats = {};
 
     if (process.env.ID && process.env.DBL && process.env.DBOT) {
-      logger.Info('Cluster', 'Posting', '600000ms');
+      logger.info('Cluster', 'Posting', '600000ms');
       setInterval(this.PostStats, 600000, this);
     }
 
@@ -28,7 +28,9 @@ class ClusterManager {
 
     process.on('SIGINT', () => {
       this.exit = true;
-      Object.keys(cluster.workers).forEach(k => cluster.workers[k].kill('SIGINT'));
+      Object.keys(cluster.workers).forEach((k) => {
+        cluster.workers[k].kill('SIGINT');
+      });
     });
 
     this.cluster.on('message', async (worker, data) => {
@@ -38,21 +40,20 @@ class ClusterManager {
           this.Find(1, data.name, data.id);
           this.queue.set(data.id, worker.id);
           break;
-        case 'return':
-          {
-            const queue = this.queue.get(data.id);
-            const requester = this.clusters.get(queue);
-            if (requester) {
-              requester.worker.send({
-                name: 'return',
-                id: data.id,
-                data: data.data,
-                cluster: data.cluster,
-              });
-              this.queue.delete(data.id);
-            }
-            break;
+        case 'return': {
+          const queue = this.queue.get(data.id);
+          const requester = this.clusters.get(queue);
+          if (requester) {
+            requester.worker.send({
+              name: 'return',
+              id: data.id,
+              data: data.data,
+              cluster: data.cluster,
+            });
+            this.queue.delete(data.id);
           }
+          break;
+        }
         case 'stats':
           this.stats[data.data.cluster] = data.data;
           break;
@@ -70,7 +71,11 @@ class ClusterManager {
   }
 
   start() {
-    logger.Info('Cluster', 'Starting', `${this.numberOfShards} shards over ${this.numberOfClusters} clusters`);
+    logger.info(
+      `[Cluster] Starting ${this.numberOfShards} shards over ${
+        this.numberOfClusters
+      } clusters`,
+    );
     let offset = 0;
     let shards = this.numberOfShards;
     let clusters = this.numberOfClusters;
@@ -94,7 +99,7 @@ class ClusterManager {
       };
       this.createNewWorker({
         firstShardID: offset,
-        lastShardID: (offset + item) - 1,
+        lastShardID: offset + item - 1,
         maxShards: this.numberOfShards,
         cluster: index,
       });
@@ -103,18 +108,15 @@ class ClusterManager {
   }
 
   restart() {
-    logger.Info('Cluster', 'Restart', '');
+    logger.info('[Cluster] Restart');
     this.clusters = {};
     this.cluster.disconnect(() => this.start());
   }
 
-  createNewWorker({
-    firstShardID,
-    lastShardID,
-    maxShards,
-    cluster,
-  }) {
-    logger.Info('Cluster', 'Create', `Cluster ${cluster} created with shards ${firstShardID} - ${lastShardID} of ${maxShards} shards`);
+  createNewWorker({ firstShardID, lastShardID, maxShards, cluster }) {
+    logger.info(
+      `[Cluster] Created Cluster ${cluster} created with shards ${firstShardID} - ${lastShardID} of ${maxShards} shards`,
+    );
     const worker = this.cluster.fork({
       firstShardID,
       lastShardID,
@@ -131,15 +133,25 @@ class ClusterManager {
 
   onOnlineWorker(worker) {
     const cluster = this.clusters.get(worker.id);
-    logger.Success('Cluster', 'Online', `ID: ${cluster.id} - Cluster ${cluster.id} shards ${cluster.firstShardID} - ${cluster.lastShardID}`);
+    logger.info(
+      `[Cluster] Online ID: ${cluster.id} - Cluster ${cluster.id} shards ${
+        cluster.firstShardID
+      } - ${cluster.lastShardID}`,
+    );
   }
 
   onDeadWorker(deadWorker, reason) {
     if (this.exit) return;
     const cluster = this.clusters.get(deadWorker.id);
-    logger.Warning('Cluster', 'Died', `ID: ${deadWorker.id} - Cluster ${cluster.id} died: ${reason}`);
+    logger.warning(
+      `[Cluster] Died ID: ${deadWorker.id} - Cluster ${
+        cluster.id
+      } died: ${reason}`,
+    );
     if (!this.clusters.get(deadWorker.id)) {
-      logger.Error('Cluster', 'Not Found', `ID: ${deadWorker.id} - Cluster ${cluster.id}`);
+      logger.error(
+        `[Cluster] Not Found ID: ${deadWorker.id} - Cluster ${cluster.id}`,
+      );
       this.restart();
     } else {
       const deadCluster = this.clusters.get(deadWorker.id);
@@ -164,21 +176,37 @@ class ClusterManager {
     Object.keys(self.stats).forEach((key) => {
       count += self.stats[key].guilds.length;
     });
-    logger.Info('Cluster', 'Post', `Count: ${count}`);
-    snekfetch.post(`https://discordbots.org/api/bots/${process.env.ID}/stats`)
-      .set('Authorization', process.env.DBL)
-      .send({
+    logger.info(`[Cluster] Guild count: ${count}`);
+    request({
+      uri: `https://discordbots.org/api/bots/${process.env.ID}/stats`,
+      headers: {
+        Authorization: process.env.DBL,
+      },
+      json: true,
+      method: 'POST',
+      body: {
         server_count: count,
-      })
-      .then(() => logger.Success('Guild Count', 'DBL', `Guilds: ${count}`))
-      .catch(err => console.error('Whoops something went wrong: ', err));
-    snekfetch.post(`https://bots.discord.pw/api/bots/${process.env.ID}/stats`)
-      .set('Authorization', process.env.DBOT)
-      .send({
+      },
+    })
+      .on('complete', () => logger.info('[Cluster] DBL posted'))
+      .on('error', (e) => {
+        console.error(e);
+      });
+    request({
+      uri: `https://bots.discord.pw/api/bots/${process.env.ID}/stats`,
+      headers: {
+        Authorization: process.env.DBOT,
+      },
+      json: true,
+      method: 'POST',
+      body: {
         server_count: count,
-      })
-      .then(() => logger.Success('Guild Count', 'DBOT', `Guilds: ${count}`))
-      .catch(err => console.error('Whoops something went wrong: ', err));
+      },
+    })
+      .on('complete', () => logger.info('[Cluster] DBOT posted'))
+      .on('error', (e) => {
+        console.error(e);
+      });
   }
 }
 

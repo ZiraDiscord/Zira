@@ -6,7 +6,7 @@ exports.Run = async function Run(caller, command, GUILD, lang) {
 };
 
 exports.Settings = {
-  command: 'TEMPLATE',
+  command: 'test',
   show: false,
   permissions: ['manageMessages'],
   dm: false,

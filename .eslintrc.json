@@ -4,7 +4,8 @@
     "sourceType": "script"
   },
   "rules": {
-    "valid-jsdoc": ["error",
+    "valid-jsdoc": [
+      "error",
       {
         "requireReturn": false,
         "requireReturnDescription": false,
@@ -22,17 +23,16 @@
         }
       }
     ],
-    "indent": "off",
-    "strict": ["error", "safe"],
     "linebreak-style": "off",
-    "no-restricted-syntax": ["off"],
+    "operator-linebreak": "off",
+    "nonblock-statement-body-position": "off",
+    "strict": ["error", "safe"],
     "no-console": "off",
     "no-plusplus": "off",
     "max-len": "off",
     "class-methods-use-this": "off",
-    "no-underscore-dangle": "off",
+    "arrow-parens": "off",
     "no-restricted-globals": "off",
-    "no-await-in-loop": "off",
     "object-curly-newline": "off",
     "react/jsx-curly-brace-presence": "off"
   }

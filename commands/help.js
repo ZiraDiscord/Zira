@@ -1,69 +1,57 @@
 'use strict';
 
 const fs = require('fs');
-const {
-  promisify,
-} = require('util');
+const { promisify } = require('util');
 
 const getCommands = promisify(fs.readdir);
 
-exports.Run = async function Run(caller, command, GUILD) {
-  const lang = caller.utils.getLang(GUILD);
-  const commands = await getCommands('./commands');
+exports.Run = async function Run(caller, command, GUILD, lang) {
+  const commandList = await getCommands('./commands');
+  const commands = [];
   const embed = {
     color: caller.color.blue,
     title: lang.help.commandsTitle,
-    fields: [{
-        name: lang.help.categories.role,
-        value: '',
-      }, {
-        name: lang.help.categories.logs,
-        value: '',
-      }, {
-        name: lang.help.categories.suggestion,
-        value: '',
-      },
-      {
-        name: lang.help.categories.misc,
-        value: '',
-      },
-      {
-        name: lang.help.linksTitle,
-        value: lang.help.links,
-      },
-    ],
+    fields: [],
+    footer: {
+      text: lang.help.footer,
+    },
   };
-  commands.forEach((file) => {
+  commandList.forEach((file) => {
     try {
       const cmd = require(`./${file}`); // eslint-disable-line
-      if (cmd.Settings().show) {
-        switch (cmd.Settings().category) {
-          case 'role':
-            embed.fields[0].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
-            break;
-          case 'logs':
-            embed.fields[1].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
-            break;
-          case 'suggestion':
-            embed.fields[2].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
-            break;
-          default:
-            embed.fields[3].value += `**${command.prefix}${file.split('.')[0]}** ~~-~~ ${lang.help.commands[file.split('.')[0]]}`;
-        }
+      if (cmd.Settings.show) {
+        commands.push({
+          name:
+            command.prefix +
+            cmd.Settings.command +
+            lang.commands[cmd.Settings.command].params,
+          value: lang.commands[cmd.Settings.command].description,
+        });
       }
     } catch (e) {
-      caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
+      caller.logger.warn(`[Help Command] Error ${JSON.stringify(e)}`);
     } finally {
       delete require.cache[require.resolve(`./${file}`)];
     }
   });
-  caller.utils.message(command.msg.channel.id, {
-    embed,
-  }).catch(console.error);
+  if (commands.length > 10) {
+    // do paged embed
+  } else {
+    embed.fields = commands;
+  }
+  embed.fields.push({
+    name: lang.help.title,
+    value: lang.help.links.join('\n'),
+  });
+  caller.utils
+    .createMessage(command.msg.channel.id, {
+      embed,
+    });
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: false,
-  };
+exports.Settings = {
+  command: 'help',
+  show: false,
+  permissions: [],
+  dm: true,
 };
