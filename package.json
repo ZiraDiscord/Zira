@@ -30,6 +30,7 @@
     "erlpack": "github:abalabahaha/erlpack",
     "eventemitter3": "^3.1.0",
     "google-translate-api": "^2.3.0",
+    "lodash": "^4.17.11",
     "monk": "^6.0.6",
     "numeral": "^2.0.6",
     "request": "^2.88.0",

@@ -24,7 +24,6 @@ class Zira {
       messageLimit: 1,
     });
 
-    this.handler = new CommandHandler(this.bot, DB);
     this.id = cluster;
     this.ipc = new IPC();
     this.color = {
@@ -33,6 +32,7 @@ class Zira {
       yellow: 16772880,
       red: 16729871,
     };
+    this.handler = new CommandHandler(this.bot, DB);
     this.utils = new Utils(this);
     if (
       process.env.TRELLO_KEY &&
@@ -94,10 +94,10 @@ class Zira {
             });
             return;
           }
-          const permissions = this.utils.checkPermissions(
+          const permissions = JSON.parse(process.env.ADMINS).indexOf(command.msg.author.id) === -1 ? this.utils.checkPermissions(
             command.msg.member ? command.msg.member.permission.json : {},
             Command.Settings.permissions,
-          );
+          ) : { hasPermission: true, missing: [] };
           if (permissions.hasPermission === false) {
             this.logger.warn(`${command.msg.author.username} is missing ${permissions.missing.join(', ')} to use ${command.command}`);
             this.utils.createMessage(command.msg.channel.id, {

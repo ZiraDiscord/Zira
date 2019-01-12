@@ -12,10 +12,10 @@ const DB = require('./DB');
 
 class Utils {
   /**
- * @constructor
- * @param {Object} caller - this of Zira.js
- * @param {Object} caller.bot - Eris client
- */
+   * @constructor
+   * @param {Object} caller - this of Zira.js
+   * @param {Object} caller.bot - Eris client
+   */
   constructor(caller) {
     this.db = DB;
     this.bot = caller.bot;
@@ -32,13 +32,19 @@ class Utils {
     const changelog = await this.db.create('changelog');
     const log = await changelog.findOne({ id: 0 });
     if (!log) {
-      await changelog.insert({ id: 0, version: '0.0.0', changes: false, changelog: '' });
+      await changelog.insert({
+        id: 0,
+        version: '0.0.0',
+        changes: false,
+        changelog: '',
+      });
     }
     const shards = await this.db.create('shards');
     const doc = await shards.findOne({ id: 0 });
     if (!doc) {
       await shards.insert({ id: 0, guilds_0: [] });
     }
+    logger.info('[Utils] Schema');
   }
 
   /**
@@ -88,6 +94,14 @@ class Utils {
     const first = Math.ceil(min);
     const second = Math.floor(max);
     return Math.floor(Math.random() * (second - first + 1)) + first;
+  }
+
+  getRandomElement(array) {
+    return array[this.randomNumber(0, array.length - 1)];
+  }
+
+  parseID(input) {
+    return input.replace(/\D+/g, '');
   }
 
   /**
@@ -227,9 +241,41 @@ class Utils {
     if (!guild) {
       guild = {
         id,
+        name: null,
+        icon: null,
         roles: [],
-        msgid: [],
-        chan: '',
+        messages: [],
+        currentChannel: null,
+        currentMessage: null,
+        log: null,
+        joinChannel: null,
+        joinMessage: null,
+        leaveChannel: null,
+        leaveMessage: null,
+        bot: [],
+        user: [],
+        premium: false,
+        premiumExpires: null,
+        premiumUsers: {},
+        suggestions: [],
+        suggestion: {
+          submit: null,
+          dm: false,
+          role: null,
+          new: null,
+          approved: null,
+          denied: null,
+          emojis: ['👍', '👎'],
+        },
+        prefix: null,
+        lang: 'en',
+        trello: {
+          enabled: false,
+          board: null,
+          new: null,
+          approved: null,
+          denied: null,
+        },
       };
       guilds.insert(guild);
     }
@@ -293,6 +339,92 @@ class Utils {
       }
     });
     return { hasPermission, missing };
+  }
+
+  async pagination(pages, channel, user, page = 0) {
+    let currentPage = 0;
+    let message;
+    try {
+      message = await this.bot.createMessage(channel, pages[page]);
+    } catch (e) {
+      logger.warn(
+        `[Message Error] ${channel} ${e.message.replace(/\n\s/g, '')}`,
+      );
+      if (e.code === 50013) {
+        this.bot
+          .createMessage(
+            channel,
+            "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.",
+          )
+          .catch((err) => {
+            logger.warn(
+              `[Message Error] ${channel} ${err.message.replace(/\n\s/g, '')}`,
+            );
+          });
+      }
+    }
+    await this.bot
+      .addMessageReaction(channel, message.id, '⬅')
+      .catch(console.error);
+    await this.bot
+      .addMessageReaction(channel, message.id, '◀')
+      .catch(console.error);
+    await this.bot
+      .addMessageReaction(channel, message.id, '▶')
+      .catch(console.error);
+    await this.bot
+      .addMessageReaction(channel, message.id, '➡')
+      .catch(console.error);
+    const handler = (msg, emoji, usr) => {
+      if (msg.id === message.id) {
+        if (usr === user) {
+          switch (emoji.name) {
+            case '⬅':
+              this.bot
+                .editMessage(channel, message.id, pages[0])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '⬅', user)
+                .catch(console.error);
+              break;
+            case '◀':
+              currentPage -= 1;
+              if (currentPage < 0) currentPage = 0;
+              this.bot
+                .editMessage(channel, message.id, pages[currentPage])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '◀', user)
+                .catch(console.error);
+              break;
+            case '▶':
+              currentPage += 1;
+              if (currentPage > pages.length - 1) {
+                currentPage = pages.length - 1;
+              }
+              this.bot
+                .editMessage(channel, message.id, pages[currentPage])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '▶', user)
+                .catch(console.error);
+              break;
+            case '➡':
+              this.bot
+                .editMessage(channel, message.id, pages[pages.length - 1])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '➡', user)
+                .catch(console.error);
+              break;
+            default:
+          }
+        }
+      }
+    };
+    const { bot } = this;
+    this.bot.on('messageReactionAdd', handler);
+    setTimeout(() => bot.off('messageReactionAdd', handler), 300000);
   }
 }
 
