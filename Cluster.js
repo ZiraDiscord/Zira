@@ -20,6 +20,6 @@ if (cluster.isMaster) {
     firstShardID: parseInt(process.env.firstShardID, 10),
     lastShardID: parseInt(process.env.lastShardID, 10),
     maxShards: parseInt(process.env.maxShards, 10),
-    cluster: process.env.cluster,
+    cluster: parseInt(process.env.cluster, 10),
   });
 }

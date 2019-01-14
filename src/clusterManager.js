@@ -113,7 +113,9 @@ class ClusterManager {
     this.cluster.disconnect(() => this.start());
   }
 
-  createNewWorker({ firstShardID, lastShardID, maxShards, cluster }) {
+  createNewWorker({
+    firstShardID, lastShardID, maxShards, cluster,
+  }) {
     logger.info(
       `[Cluster] Created Cluster ${cluster} created with shards ${firstShardID} - ${lastShardID} of ${maxShards} shards`,
     );
@@ -143,7 +145,7 @@ class ClusterManager {
   onDeadWorker(deadWorker, reason) {
     if (this.exit) return;
     const cluster = this.clusters.get(deadWorker.id);
-    logger.warning(
+    logger.warn(
       `[Cluster] Died ID: ${deadWorker.id} - Cluster ${
         cluster.id
       } died: ${reason}`,
@@ -155,8 +157,12 @@ class ClusterManager {
       this.restart();
     } else {
       const deadCluster = this.clusters.get(deadWorker.id);
-      this.clusters.delete(deadWorker.id);
-      this.createNewWorker(deadCluster);
+      this.createNewWorker({
+        firstShardID: deadCluster.firstShardID,
+        lastShardID: deadCluster.lastShardID,
+        maxShards: this.numberOfShards,
+        cluster: deadCluster.id,
+      });
     }
   }
 
@@ -189,21 +195,6 @@ class ClusterManager {
       },
     })
       .on('complete', () => logger.info('[Cluster] DBL posted'))
-      .on('error', (e) => {
-        console.error(e);
-      });
-    request({
-      uri: `https://bots.discord.pw/api/bots/${process.env.ID}/stats`,
-      headers: {
-        Authorization: process.env.DBOT,
-      },
-      json: true,
-      method: 'POST',
-      body: {
-        server_count: count,
-      },
-    })
-      .on('complete', () => logger.info('[Cluster] DBOT posted'))
       .on('error', (e) => {
         console.error(e);
       });
