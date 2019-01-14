@@ -27,8 +27,20 @@ class Utils {
    * Make sure all collections are in the database
    */
   async schema() {
+    if (this.caller.id !== 0) return;
     await this.db.create('reaction');
-    await this.db.create('once');
+    await this.db.create('users');
+    await this.db.create('premium');
+    if (process.env.API) {
+      const statsCollection = await this.db.create('stats');
+      const stats = await statsCollection.findOne({ id: 0 });
+      if (!stats) {
+        await statsCollection.insert({
+          id: 0,
+          clusters: {},
+        });
+      }
+    }
     const changelog = await this.db.create('changelog');
     const log = await changelog.findOne({ id: 0 });
     if (!log) {
@@ -215,6 +227,21 @@ class Utils {
     }
   }
 
+  combine(First, Second) {
+    const res = [];
+    const arr = First.concat(Second);
+    let I = arr.length;
+    const Obj = {};
+    while (I--) {
+      const item = arr[I];
+      if (!Obj[item]) {
+        res.unshift(item);
+        Obj[item] = true;
+      }
+    }
+    return res;
+  }
+
   parseParams(Params) {
     const params = [];
     let string = '';
@@ -249,7 +276,7 @@ class Utils {
         currentMessage: null,
         log: null,
         joinChannel: null,
-        joinMessage: null,
+        joinMessage: [],
         leaveChannel: null,
         leaveMessage: null,
         bot: [],
@@ -265,20 +292,27 @@ class Utils {
           new: null,
           approved: null,
           denied: null,
+          invalid: null,
+          potential: null,
+          reaction: false,
           emojis: ['👍', '👎'],
         },
         prefix: null,
         lang: 'en',
+        commandRole: null,
         trello: {
           enabled: false,
           board: null,
           new: null,
           approved: null,
           denied: null,
+          potential: null,
+          invalid: null,
         },
       };
-      guilds.insert(guild);
+      await guilds.insert(guild);
     }
+    guild = await this.configCheck(guild); // Doing this for when rewrite is live as the databse will have the old configs
     return guild;
   }
 
@@ -306,7 +340,7 @@ class Utils {
     return obj;
   }
 
-  postStats(caller) {
+  async postStats(caller) {
     process.send({
       name: 'stats',
       data: {
@@ -315,12 +349,17 @@ class Utils {
         users: caller.bot.users.filter((u) => !u.bot).length,
         bots: caller.bot.users.filter((u) => u.bot).length,
         guilds: caller.bot.guilds.map((g) => g.id),
-        memory: (process.memoryUsage().rss / 1024 / 1024).toFixed(2),
+        memory: parseFloat((process.memoryUsage().rss / 1024 / 1024).toFixed(2), 10),
         uptime: caller.utils.getTime(caller.bot.startTime),
         cluster: caller.id,
         shards: caller.bot.shards.size,
+        latency: caller.bot.shards.map( shard => shard.latency ),
       },
     });
+    if (!process.env.API) return;
+    const statsCollection = await caller.db.get('stats');
+    const ipc = await caller.ipc.getStats(new Date().getTime());
+    await statsCollection.findOneAndUpdate({ id: 0 }, { id: 0, clusters: ipc.stats });
   }
 
   /**
@@ -363,6 +402,7 @@ class Utils {
           });
       }
     }
+    if (pages.length === 1) return;
     await this.bot
       .addMessageReaction(channel, message.id, '⬅')
       .catch(console.error);
@@ -380,6 +420,7 @@ class Utils {
         if (usr === user) {
           switch (emoji.name) {
             case '⬅':
+              currentPage = 0;
               this.bot
                 .editMessage(channel, message.id, pages[0])
                 .catch(console.error);
@@ -410,6 +451,7 @@ class Utils {
                 .catch(console.error);
               break;
             case '➡':
+              currentPage = pages.length - 1;
               this.bot
                 .editMessage(channel, message.id, pages[pages.length - 1])
                 .catch(console.error);
@@ -425,6 +467,84 @@ class Utils {
     const { bot } = this;
     this.bot.on('messageReactionAdd', handler);
     setTimeout(() => bot.off('messageReactionAdd', handler), 300000);
+  }
+
+  async configCheck(config) {
+    const premiumCollection = await this.db.get('premium');
+    let premium = await premiumCollection.findOne({ id: config.id });
+    if (!premium) premium = { premium: false, premiumExpires: null, premiumUsers: {} };
+    const roles = [];
+    config.roles.forEach((role) => {
+      if (role.msg) {
+        role.message = role.msg;
+        delete role.msg;
+      }
+      roles.push(role);
+    });
+    let { joinMessage } = config;
+    if (typeof joinMessage === 'string') joinMessage = [joinMessage];
+    if (joinMessage === null) joinMessage = [];
+    return {
+      id: config.id,
+      name: config.name,
+      icon: config.icon,
+      roles,
+      messages: config.msgid ? config.msgid : config.messages,
+      currentChannel: config.chan ? config.chan : config.currentChannel,
+      currentMessage: config.emoji ? config.emoji : config.currentMessage,
+      log: config.log ? config.log : null,
+      joinChannel: config.joinChannel ? config.joinChannel : null,
+      joinMessage,
+      leaveChannel: config.leaveChannel ? config.leaveChannel : null,
+      leaveMessage: config.leaveMessage ? config.leaveMessage : null,
+      bot: config.bot ? config.bot : [],
+      user: config.user ? config.user : [],
+      premium: premium.premium,
+      premiumExpires: premium.premiumExpires,
+      premiumUsers: premium.premiumUsers,
+      suggestions: config.suggestions ? config.suggestions : [],
+      suggestion: {
+        submit: config.submitChannel
+          ? config.submitChannel
+          : config.suggestion.submit,
+        dm: config.suggestionDM ? config.suggestionDM : config.suggestion.dm,
+        role: config.suggestionRole
+          ? config.suggestionRole
+          : config.suggestion.role,
+        new:
+          typeof config.suggestion === 'string'
+            ? config.suggestion
+            : config.suggestion.new,
+        approved: config.suggestion.approved ? config.suggestion.approved : null,
+        denied: config.suggestion.denied ? config.suggestion.denied : null,
+        invalid: config.suggestion.invalid ? config.suggestion.invalid : null,
+        potential: config.suggestion.potential ? config.suggestion.potential : null,
+        reaction: config.suggestion.reaction ? config.suggestion.reaction : false,
+        emojis: config.suggestion.emojis ? config.suggestion.emojis : ['👍', '👎'],
+      },
+      prefix: config.prefix ? config.prefix : null,
+      lang: config.lang ? config.lang : 'en',
+      commandRole: config.commandRole ? config.commandRole : null,
+      trello: config.trello
+        ? {
+            enabled: config.trello.enabled,
+            board: config.trello.board ? config.trello.board : null,
+            new: config.trello.list ? config.trello.list : config.trello.new,
+            approved: config.trello.approved ? config.trello.approved : null,
+            denied: config.trello.denied ? config.trello.denied : null,
+            potential: config.trello.potential ? config.trello.potential : null,
+            invalid: config.trello.invalid ? config.trello.invalid : null,
+          }
+        : {
+            enabled: false,
+            board: null,
+            new: null,
+            approved: null,
+            denied: null,
+            potential: null,
+            invalid: null,
+          },
+    };
   }
 }
 

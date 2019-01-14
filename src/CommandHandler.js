@@ -161,7 +161,7 @@ class CommandHandler extends EventEmitter {
         msg,
         params,
         command: firstWord,
-        prefix: `<@${this.bot.user.id}> `,
+        prefix: this.prefix,
       };
       if (msg.channel.guild) command.channels = msg.channel.guild.channels;
       if (msg.channel.guild) command.roles = msg.channel.guild.roles;
@@ -190,7 +190,7 @@ class CommandHandler extends EventEmitter {
         msg,
         params,
         command: firstWord,
-        prefix: `<@!${this.bot.user.id}> `,
+        prefix: this.prefix,
       };
       if (msg.channel.guild) command.channels = msg.channel.guild.channels;
       if (msg.channel.guild) command.roles = msg.channel.guild.roles;

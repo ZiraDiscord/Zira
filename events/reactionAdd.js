@@ -3,11 +3,19 @@
 exports.Run = async function Run(caller, _message, _emoji, _user) {
   const self = caller;
   const guild = await self.utils.getGuild(_message.channel.guild.id);
-  if (guild.msgid.indexOf(_message.id) === -1) return;
+  if (guild.messages.indexOf(_message.id) === -1) return;
   if (!guild) return; // no idea why this would be undefined or null but yea
-  const [role] = guild.roles.filter(r => r.msg === _message.id && (r.emoji === _emoji.name || r.emoji.indexOf(_emoji.id) !== -1));
-  const emoji = (_emoji.id === null) ? _emoji.name : `${(_emoji.animated) ? '<a:' : '<:'}${_emoji.name}:${_emoji.id}>`;
-  const message = await self.bot.getMessage(_message.channel.id, _message.id).catch(console.error);
+  const [role] = guild.roles.filter(
+    (r) => r.message === _message.id &&
+      (r.emoji === _emoji.name || r.emoji.indexOf(_emoji.id) !== -1),
+  );
+  const emoji =
+    _emoji.id === null
+      ? _emoji.name
+      : `${_emoji.animated ? '<a:' : '<:'}${_emoji.name}:${_emoji.id}>`;
+  const message = await self.bot
+    .getMessage(_message.channel.id, _message.id)
+    .catch(console.error);
   const me = message.channel.guild.members.get(self.bot.user.id);
   const user = message.channel.guild.members.get(_user);
   const lang = self.utils.getLang(guild);
@@ -16,9 +24,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
     if (!me.permission.has('manageRoles')) return;
     let highestRole = 0;
     me.roles.forEach((id) => {
-      const {
-        position,
-      } = message.channel.guild.roles.get(id);
+      const { position } = message.channel.guild.roles.get(id);
       if (position > highestRole) highestRole = position;
     });
     if (role.id) {
@@ -33,25 +39,35 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
       if (higher) return;
     }
     if (role.toggle) {
-      const toggleEmojis = guild.roles.filter(r => r.msg === _message.id && r.toggle === true && r.id !== role.id).map(r => r.emoji);
+      const toggleEmojis = guild.roles
+        .filter(
+          (r) => r.message === _message.id && r.toggle === true && r.id !== role.id,
+        )
+        .map((r) => r.emoji);
       if (self.userRateLimits[_user] !== undefined) {
         const ms = new Date().getTime() - self.userRateLimits[_user];
-        if (ms < (500 * toggleEmojis.length)) return;
+        if (ms < 500 * toggleEmojis.length) return;
       }
       self.userRateLimits[_user] = new Date().getTime();
       if (me.permission.has('manageMessages')) {
         const ReactionKeys = Object.keys(message.reactions);
         ReactionKeys.forEach((i, index) => {
-          if (toggleEmojis.indexOf(i) !== -1 || toggleEmojis.filter(e => e.indexOf(i) !== -1)[0]) {
+          if (
+            toggleEmojis.indexOf(i) !== -1 ||
+            toggleEmojis.filter((e) => e.indexOf(i) !== -1)[0]
+          ) {
             setTimeout(() => {
-              message.removeReaction(i, _user).catch(console.error);
+              message
+                .removeReaction(i, _user)
+                .catch((e) => caller.logger.warn(`[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`));
             }, 100 * index);
           }
         });
       }
     }
     if (role.once) {
-      const [claimedUser] = await self.db.Find('once', {
+      const once = await self.db.get('once');
+      const claimedUser = await once.findOne({
         id: _user,
       });
       if (claimedUser) {
@@ -59,114 +75,167 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
           claimed = true;
         } else {
           claimedUser.claimed.push(role.id);
-          await self.db.Update('once', {
-            id: _user,
-          }, claimedUser);
+          await once.findOneAndUpdate(
+            {
+              id: _user,
+            },
+            claimedUser,
+          );
         }
       } else {
-        await self.db.Insert('once', {
+        await once.insert({
           id: _user,
           claimed: [role.id],
         });
       }
-      if (me.permission.has('manageMessages')) await message.removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user).catch(console.error);
+      if (me.permission.has('manageMessages')) {
+        await message
+          .removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user)
+          .catch((e) => caller.logger.warn(`[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`));
+      }
     }
     if (role.remove) {
-      if (user.roles.indexOf(role.id) !== -1) user.roles.splice(user.roles.indexOf(role.id), 1);
-      if (user.roles.indexOf(role.add) === -1 && role.add) user.roles.push(role.add);
+      if (user.roles.indexOf(role.id) !== -1) { user.roles.splice(user.roles.indexOf(role.id), 1); }
+      if (user.roles.indexOf(role.add) === -1 && role.add) { user.roles.push(role.add); }
       try {
-        await user.edit({
-          roles: self.utils.combine(user.roles, role.ids),
-        }, 'Reaction Role');
+        await user.edit(
+          {
+            roles: self.utils.combine(user.roles, role.ids),
+          },
+          'Reaction Role',
+        );
       } catch (e) {
-        console.error(e);
+        caller.logger.warn(
+          `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+        );
         return;
       }
       if (guild.log) {
-        self.bot.createMessage(guild.log, {
-          embed: {
-            footer: {
-              text: `${user.username}#${user.discriminator}`,
-              icon_url: user.avatarURL,
+        self.bot
+          .createMessage(guild.log, {
+            embed: {
+              footer: {
+                text: `${user.username}#${user.discriminator}`,
+                icon_url: user.avatarURL,
+              },
+              color: 0x00d62e,
+              description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${
+                lang.log.remove[1]
+              }<@&${role.id}>${lang.log.give[2]}<@&${role.add}>`,
+              timestamp: new Date(),
             },
-            color: 0x00d62e,
-            description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${lang.log.remove[1]}<@&${role.id}>${lang.log.give[2]}<@&${role.add}>`,
-            timestamp: new Date(),
-          },
-        }).catch((e) => {
-          console.error(e);
-          if (e.code === 50013 || e.code === 50001) {
-            guild.log = '';
-            self.utils.updateGuild(guild);
+          })
+          .catch((e) => {
+            caller.logger.warn(
+              `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+            );
+            if (e.code === 50013 || e.code === 50001) {
+              guild.log = '';
+              self.utils.updateGuild(guild);
+            }
+          });
+        if (me.permission.has('manageMessages')) {
+          await message
+            .removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user)
+            .catch(e => caller.logger.warn(
+              `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+            ));
           }
-        });
-        if (me.permission.has('manageMessages')) await message.removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user).catch(console.error);
       }
       return; // eslint-disable-line
     }
     if (role.multi) {
       try {
-        await user.edit({
-          roles: self.utils.combine(user.roles, role.ids),
-        }, 'Reaction Role');
+        await user.edit(
+          {
+            roles: self.utils.combine(user.roles, role.ids),
+          },
+          'Reaction Role',
+        );
       } catch (e) {
-        console.error(e);
+        caller.logger.warn(
+          `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+        );
         return;
       }
       let roles = '';
       role.ids.forEach((id, index) => {
-        roles += `<@&${id}>${(index === role.ids.length - 1) ? ' ' : ', '}`;
+        roles += `<@&${id}>${index === role.ids.length - 1 ? ' ' : ', '}`;
       });
       if (guild.log) {
-        self.bot.createMessage(guild.log, {
-          embed: {
-            footer: {
-              text: `${user.username}#${user.discriminator}`,
-              icon_url: user.avatarURL,
+        self.bot
+          .createMessage(guild.log, {
+            embed: {
+              footer: {
+                text: `${user.username}#${user.discriminator}`,
+                icon_url: user.avatarURL,
+              },
+              color: 0x00d62e,
+              description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${
+                lang.log.give[1]
+              }${roles}`,
+              timestamp: new Date(),
             },
-            color: 0x00d62e,
-            description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${lang.log.give[1]}${roles}`,
-            timestamp: new Date(),
-          },
-        }).catch((e) => {
-          console.error(e);
-          if (e.code === 50013 || e.code === 50001) {
-            guild.log = '';
-            self.utils.updateGuild(guild);
-          }
-        });
+          })
+          .catch((e) => {
+            caller.logger.warn(
+              `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+            );
+            if (e.code === 50013 || e.code === 50001) {
+              guild.log = '';
+              self.utils.updateGuild(guild);
+            }
+          });
       }
       return; // eslint-disable-line
     }
     if (!claimed) {
       try {
         if (!me.permission.has('manageRoles')) return;
-        await message.channel.guild.addMemberRole(_user, role.id, 'Reaction Role');
+        await message.channel.guild.addMemberRole(
+          _user,
+          role.id,
+          'Reaction Role',
+        );
       } catch (e) {
-        console.error(e);
+        caller.logger.warn(
+          `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+        );
         return;
       }
       if (guild.log) {
-        self.bot.createMessage(guild.log, {
-          embed: {
-            footer: {
-              text: `${user.username}#${user.discriminator}`,
-              icon_url: user.avatarURL,
+        self.bot
+          .createMessage(guild.log, {
+            embed: {
+              footer: {
+                text: `${user.username}#${user.discriminator}`,
+                icon_url: user.avatarURL,
+              },
+              color: 0x00d62e,
+              description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${
+                lang.log.give[1]
+              }<@&${role.id}>`,
+              timestamp: new Date(),
             },
-            color: 0x00d62e,
-            description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${lang.log.give[1]}<@&${role.id}>`,
-            timestamp: new Date(),
-          },
-        }).catch((e) => {
-          console.error(e);
-          if (e.code === 50013 || e.code === 50001) {
-            guild.log = '';
-            self.utils.updateGuild(guild);
-          }
-        });
+          })
+          .catch((e) => {
+            caller.logger.warn(
+              `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+            );
+            if (e.code === 50013 || e.code === 50001) {
+              guild.log = '';
+              self.utils.updateGuild(guild);
+            }
+          });
       }
       return; // eslint-disable-line
     }
   }
-  if (me.permission.has('manageMessages')) await message.removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user).catch(console.error);
+  if (me.permission.has('manageMessages')) {
+    await message
+      .removeReaction(emoji.replace(/(<:)|(<)|(>)/g, ''), _user)
+      .catch(e => caller.logger.warn(
+        `[reactionAdd] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+      ));
+    }
 };
