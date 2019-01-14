@@ -28,7 +28,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       },
     ],
     footer: {
-      text: `Cluster: ${caller.id} Shard: ${(command.msg.channel.guild) ? command.msg.channel.guild.shard.id : 0} | Uptime: ${caller.utils.getTime(caller.bot.startTime)}`,
+      text: `Cluster: ${caller.id} Shard: ${(command.guild) ? command.guild.shard.id : 0} | Uptime: ${caller.utils.getTime(caller.bot.startTime)}`,
     },
   };
   if (changelog.changes) {

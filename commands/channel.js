@@ -45,8 +45,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         title: lang.titles.complete,
         description: lang.commands.channel.set + channel.mention,
       },
-    })
-    .catch(console.error);
+    });
   caller.utils.updateGuild(guild);
 };
 

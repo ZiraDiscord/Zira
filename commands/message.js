@@ -37,7 +37,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     });
     return;
   }
-  if (command.params.length === 1) {
+  if (command.params.length === 1 && !isNaN(command.params[0])) {
     let message;
     try {
       message = await caller.bot.getMessage(

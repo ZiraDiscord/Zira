@@ -10,7 +10,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         fields: [
           {
             name: command.prefix + command.command + lang.commands.add.params,
-            value: `${lang.commands.add.help}\n${
+            value: `${lang.commands.toggle.help}\n${
               lang.commands.add.description
             }`,
           },
@@ -43,10 +43,38 @@ exports.Run = async function Run(caller, command, guild, lang) {
     });
     return;
   }
+  if (
+    process.env.PREMIUM &&
+    !guild.premium &&
+    guild.roles.filter((r) => r.toggle).length > 11
+  ) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.toggle.limit,
+      },
+    });
+    return;
+  }
   const params = caller.utils.parseParams(command.params);
+  if (
+    process.env.PREMIUM &&
+    !guild.premium &&
+    guild.roles.filter((r) => r.toggle).length + params.length > 11
+  ) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.toggle.over,
+      },
+    });
+    return;
+  }
   const added = [];
   for (let index = 0; index < params.length; index++) {
-    const [role] = command.guild.roles.filter((r) => r.id === params[index][1] || r.name.toLowerCase().indexOf(params[index][1].toLowerCase()) !== -1);
+    const [role] = command.guild.roles.filter((r) => r.id === params[index][1] || r.name.toLowerCase() === params[index][1].toLowerCase());
     if (!role) {
       caller.utils.createMessage(command.msg.channel.id, {
         embed: {
@@ -104,7 +132,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       );
     } catch (e) {
       caller.logger.warn(
-        `[Add] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+        `[Toggle] ${command.msg.channel.id} ${e.code} ${e.message.replace(
           /\n\s/g,
           '',
         )}`,
@@ -168,6 +196,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       emoji: params[index][0],
       message: guild.currentMessage,
       channel: guild.currentChannel,
+      toggle: true,
     });
   }
   let description = '';
@@ -178,21 +207,20 @@ exports.Run = async function Run(caller, command, guild, lang) {
   });
   if (description) {
     description += `\n${lang.footer}`;
-    caller.utils
-      .createMessage(command.msg.channel.id, {
-        embed: {
-          title: lang.titles.complete,
-          description,
-          color: caller.color.green,
-        },
-      });
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        title: lang.titles.complete,
+        description,
+        color: caller.color.green,
+      },
+    });
   }
   caller.utils.updateGuild(guild);
 };
 
 exports.Settings = {
   category: 0,
-  command: 'add',
+  command: 'toggle',
   show: true,
   permissions: ['manageRoles'],
   dm: false,

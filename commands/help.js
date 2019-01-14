@@ -14,7 +14,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         title: lang.help.categories[0],
         fields: [],
         footer: {
-          text: `${lang.help.page} 1/4 | ${lang.help.footer}`,
+          text: `${lang.help.page} 1/4`,
         },
       },
     },
@@ -24,7 +24,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         title: lang.help.categories[1],
         fields: [],
         footer: {
-          text: `${lang.help.page} 2/4 | ${lang.help.footer}`,
+          text: `${lang.help.page} 2/4`,
         },
       },
     },
@@ -34,7 +34,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         title: lang.help.categories[2],
         fields: [],
         footer: {
-          text: `${lang.help.page} 3/4 | ${lang.help.footer}`,
+          text: `${lang.help.page} 3/4`,
         },
       },
     },
@@ -44,7 +44,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         title: lang.help.categories[3],
         fields: [],
         footer: {
-          text: `${lang.help.page} 4/4 | ${lang.help.footer}`,
+          text: `${lang.help.page} 4/4`,
         },
       },
     },
@@ -62,7 +62,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         });
       }
     } catch (e) {
-      caller.logger.warn(`[Help Command] Error ${JSON.stringify(e)}`);
+      caller.logger.warn(`[Help Command] Error ${e}`);
     } finally {
       delete require.cache[require.resolve(`./${file}`)];
     }

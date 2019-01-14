@@ -23,6 +23,7 @@
         }
       }
     ],
+    "indent": "off",
     "linebreak-style": "off",
     "operator-linebreak": "off",
     "nonblock-statement-body-position": "off",
@@ -36,6 +37,8 @@
     "no-param-reassign": "off",
     "no-unused-expressions": "off",
     "no-await-in-loop": "off",
-    "array-callback-return":"off"
+    "array-callback-return": "off",
+    "no-underscore-dangle": "off",
+    "no-loop-func": "off"
   }
 }

@@ -25,9 +25,12 @@ exports.Run = async function Run(caller, command, guild, lang) {
     if (role.toggle) [, type] = lang.commands.list.types;
     if (role.once) [,, type] = lang.commands.list.types;
     if (role.multi) [,,, type] = lang.commands.list.types;
+    if (role.remove) [,,,, type] = lang.commands.list.types;
+    let name = role.multi ? role.name : `<@&${role.id}>`;
+    name = role.remove ? role.name : name;
     pages[pages.length - 1].embed.fields.push({
       name: count + 1,
-      value: `${lang.commands.list.name} <@&${role.id}>\n${lang.commands.list.channel} <#${role.channel}>\n${lang.commands.list.message} ${role.message}\n${
+      value: `${lang.commands.list.name} ${name}\n${lang.commands.list.channel} <#${role.channel}>\n${lang.commands.list.message} ${role.message}\n${
         lang.commands.list.emoji
       } ${role.emoji}\n${lang.commands.list.type} ${type}\n`,
       inline: true,

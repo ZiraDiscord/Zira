@@ -7,6 +7,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
 
 exports.Settings = {
   command: 'TEMPLATE',
+  category: 0,
   show: false,
   permissions: ['manageMessages'],
   dm: false,
