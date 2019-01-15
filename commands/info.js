@@ -13,7 +13,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       },
       {
         name: lang.commands.info.fields[1],
-        value: '[ZiraDiscord/Zira](https://github.com/ZiraDiscord/Zira)',
+        value: lang.help.links[1],
         inline: true,
       },
       {

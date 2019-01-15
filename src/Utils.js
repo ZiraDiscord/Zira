@@ -51,11 +51,6 @@ class Utils {
         changelog: '',
       });
     }
-    const shards = await this.db.create('shards');
-    const doc = await shards.findOne({ id: 0 });
-    if (!doc) {
-      await shards.insert({ id: 0, guilds_0: [] });
-    }
     logger.info('[Utils] Schema');
   }
 
@@ -353,7 +348,7 @@ class Utils {
         uptime: caller.utils.getTime(caller.bot.startTime),
         cluster: caller.id,
         shards: caller.bot.shards.size,
-        latency: caller.bot.shards.map( shard => shard.latency ),
+        latency: caller.bot.shards.map(shard => shard.latency),
       },
     });
     if (!process.env.API) return;

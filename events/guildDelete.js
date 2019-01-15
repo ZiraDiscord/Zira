@@ -14,8 +14,4 @@ exports.Run = async function Run(caller, guild) {
       timestamp: new Date(),
     }],
   }).catch(console.error);
-  const shards = await caller.db.get('shards');
-  const res = shards.findOne({ id: 0 });
-  res[`guilds_${caller.id}`] = caller.bot.guilds.map(g => g.id);
-  await shards.findOneAndUpdate({ id: 0 }, res);
 };
