@@ -85,9 +85,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
                 icon_url: user.avatarURL,
               },
               color: 0xb31414,
-              description: `<@${user.id}>${lang.log.remove[0]}${role.emoji}${
-                lang.log.remove[1]
-              }${roles}`,
+              description: lang.commands.log.removeMulti.replace('$user', user.id).replace('$emoji', role.emoji).replace('$roles', roles),
               timestamp: new Date(),
             },
           })
@@ -130,9 +128,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
               icon_url: user.avatarURL,
             },
             color: 0xb31414,
-            description: `<@${user.id}>${lang.log.remove[0]}${role.emoji}${
-              lang.log.remove[1]
-            }<@&${role.id}>`,
+            description: lang.commands.log.remove.replace('$user', user.id).replace('$emoji', role.emoji).replace('$role', role.id),
             timestamp: new Date(),
           },
         })

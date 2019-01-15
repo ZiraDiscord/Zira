@@ -2,7 +2,7 @@
 
 exports.Run = async function Run(caller, guild, member, GuildDB) {
   const Guild = GuildDB;
-  if (Guild.joinChannel && Guild.joinMessage.length) {
+  if (Guild.joinChannel && Guild.joinMessage && Guild.joinMessage.length) {
     if (!member.user.bot) {
       let msg = Guild.joinMessage[caller.utils.randomNumber(0, Guild.joinMessage.length - 1)];
       msg = msg.replace(/\$user/g, member.username);

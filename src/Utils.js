@@ -344,17 +344,23 @@ class Utils {
         users: caller.bot.users.filter((u) => !u.bot).length,
         bots: caller.bot.users.filter((u) => u.bot).length,
         guilds: caller.bot.guilds.map((g) => g.id),
-        memory: parseFloat((process.memoryUsage().rss / 1024 / 1024).toFixed(2), 10),
+        memory: parseFloat(
+          (process.memoryUsage().rss / 1024 / 1024).toFixed(2),
+          10,
+        ),
         uptime: caller.utils.getTime(caller.bot.startTime),
         cluster: caller.id,
         shards: caller.bot.shards.size,
-        latency: caller.bot.shards.map(shard => shard.latency),
+        latency: caller.bot.shards.map((shard) => shard.latency),
       },
     });
     if (!process.env.API) return;
     const statsCollection = await caller.db.get('stats');
     const ipc = await caller.ipc.getStats(new Date().getTime());
-    await statsCollection.findOneAndUpdate({ id: 0 }, { id: 0, clusters: ipc.stats });
+    await statsCollection.findOneAndUpdate(
+      { id: 0 },
+      { id: 0, clusters: ipc.stats },
+    );
   }
 
   /**
@@ -467,7 +473,9 @@ class Utils {
   async configCheck(config) {
     const premiumCollection = await this.db.get('premium');
     let premium = await premiumCollection.findOne({ id: config.id });
-    if (!premium) premium = { premium: false, premiumExpires: null, premiumUsers: {} };
+    if (!premium) {
+      premium = { premium: false, premiumExpires: null, premiumUsers: {} };
+    }
     const roles = [];
     config.roles.forEach((role) => {
       if (role.msg) {
@@ -479,6 +487,20 @@ class Utils {
     let { joinMessage } = config;
     if (typeof joinMessage === 'string') joinMessage = [joinMessage];
     if (joinMessage === null) joinMessage = [];
+    if (!config.suggestion) {
+      config.suggestion = {
+        submit: null,
+        dm: false,
+        role: null,
+        new: null,
+        approved: null,
+        denied: null,
+        invalid: null,
+        potential: null,
+        reaction: false,
+        emojis: ['👍', '👎'],
+      };
+    }
     return {
       id: config.id,
       name: config.name,
@@ -510,12 +532,20 @@ class Utils {
           typeof config.suggestion === 'string'
             ? config.suggestion
             : config.suggestion.new,
-        approved: config.suggestion.approved ? config.suggestion.approved : null,
+        approved: config.suggestion.approved
+          ? config.suggestion.approved
+          : null,
         denied: config.suggestion.denied ? config.suggestion.denied : null,
         invalid: config.suggestion.invalid ? config.suggestion.invalid : null,
-        potential: config.suggestion.potential ? config.suggestion.potential : null,
-        reaction: config.suggestion.reaction ? config.suggestion.reaction : false,
-        emojis: config.suggestion.emojis ? config.suggestion.emojis : ['👍', '👎'],
+        potential: config.suggestion.potential
+          ? config.suggestion.potential
+          : null,
+        reaction: config.suggestion.reaction
+          ? config.suggestion.reaction
+          : false,
+        emojis: config.suggestion.emojis
+          ? config.suggestion.emojis
+          : ['👍', '👎'],
       },
       prefix: config.prefix ? config.prefix : null,
       lang: config.lang ? config.lang : 'en',

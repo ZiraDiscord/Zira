@@ -119,9 +119,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
                 icon_url: user.avatarURL,
               },
               color: 0x00d62e,
-              description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${
-                lang.log.remove[1]
-              }<@&${role.id}>${lang.log.give[2]}<@&${role.add}>`,
+              description: lang.commands.log.giveRemove.replace('$user', user.id).replace('$emoji', role.emoji).replace('$role1', role.id).replace('$role2', role.add),
               timestamp: new Date(),
             },
           })
@@ -171,9 +169,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
                 icon_url: user.avatarURL,
               },
               color: 0x00d62e,
-              description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${
-                lang.log.give[1]
-              }${roles}`,
+              description: lang.commands.log.giveMulti.replace('$user', user.id).replace('$emoji', role.emoji).replace('$roles', roles),
               timestamp: new Date(),
             },
           })
@@ -212,9 +208,7 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
                 icon_url: user.avatarURL,
               },
               color: 0x00d62e,
-              description: `<@${user.id}>${lang.log.give[0]}${role.emoji}${
-                lang.log.give[1]
-              }<@&${role.id}>`,
+              description: lang.commands.log.give.replace('$user', user.id).replace('$emoji', role.emoji).replace('$role', role.id),
               timestamp: new Date(),
             },
           })
