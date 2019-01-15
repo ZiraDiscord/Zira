@@ -1,81 +1,124 @@
 'use strict';
 
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  if (command.params.length < 2) {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        description: ':warning: This command can\'t be used in DM',
-        color: caller.color.yellow,
+        color: caller.color.blue,
+        title: lang.titles.use,
+        fields: [
+          {
+            name: command.prefix + command.command + lang.commands.edit.params,
+            value: lang.commands.edit.help,
+          },
+          {
+            name: lang.example,
+            value: `${command.prefix + command.command} ${
+              command.msg.id
+            } Epic new message\n\n[${lang.guidePage}](https://zira.pw/guide/${
+              command.command
+            })`,
+          },
+        ],
       },
-    }).catch(console.error);
+    });
     return;
   }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
-    if (!command.params[0] || !command.params[1]) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          color: caller.color.blue,
-          title: lang.title,
-          description: `**${command.prefix}${lang.edit.help}\n\n${lang.example}${command.prefix}edit ${command.msg.id} Some new message\n`,
-        },
-      }).catch(console.error);
-      return;
-    }
-
-    try {
-      await caller.bot.editMessage(guild.chan, command.params[0], command.params.splice(1).join(' '));
-    } catch (e) {
-      caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
-      if (e.code === 50001) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.edit.read[0] + guild.chan + lang.edit.read[1],
-            color: caller.color.yellow,
-          },
-        }).catch(console.error);
-      } else if (e.code === 10008) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: `${lang.edit.unknownGet}${guild.chan}>`,
-            color: caller.color.yellow,
-          },
-        }).catch(console.error);
-      } else if (e.code === 50005) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.edit.no,
-            color: caller.color.yellow,
-          },
-        }).catch(console.error);
-      }
-      return;
-    }
-    caller.utils.message(command.msg.channel.id, {
+  if (!guild.currentChannel) {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        title: lang.titleComp,
-        description: lang.edit.edited,
-        color: caller.color.green,
-      },
-    }).catch(console.error);
-  } else {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        title: lang.titleError,
-        description: lang.perm.noPerm,
         color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.errors.setChannel,
       },
-    }).catch(console.error);
+    });
+    return;
   }
+  let message;
+  try {
+    message = await caller.bot.getMessage(
+      guild.currentChannel,
+      caller.utils.parseID(command.params[0]),
+    );
+  } catch (e) {
+    caller.logger.warn(
+      `[Edit Get] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+    );
+    switch (e.code) {
+      case 50001:
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.missingPermissionChannelRead,
+          },
+        });
+        break;
+      case 404:
+      case 10008:
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.unknownMessageID,
+          },
+        });
+        break;
+      default:
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.generic,
+          },
+        });
+    }
+    return;
+  }
+  if (message.author.id !== caller.bot.user.id) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.edit.owner,
+      },
+    });
+    return;
+  }
+  try {
+    await caller.bot.editMessage(
+      guild.currentChannel,
+      command.params[0],
+      command.params.splice(1, command.params.length).join(' '),
+    );
+  } catch (e) {
+    // I don't know what errors would be here that weren't caught when getting the message so yea
+    caller.logger.warn(
+      `[Edit] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
+    );
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.errors.generic,
+      },
+    });
+    return;
+  }
+  caller.utils.createMessage(command.msg.channel.id, {
+    embed: {
+      color: caller.color.green,
+      title: lang.titles.complete,
+      description: lang.commands.edit.success,
+    },
+  });
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'role',
-  };
+exports.Settings = {
+  category: 0,
+  command: 'edit',
+  show: true,
+  permissions: ['manageRoles'],
+  dm: false,
 };

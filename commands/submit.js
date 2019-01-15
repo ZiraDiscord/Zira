@@ -1,102 +1,157 @@
 'use strict';
 
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        description: ':warning: This command can\'t be used in DM',
-        color: caller.color.yellow,
-      },
-    }).catch(console.error);
-    return;
-  }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
+const ShortUniqueId = require('short-unique-id');
+
+const uid = new ShortUniqueId();
+
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
   if (!command.params[0]) {
-    caller.utils.message(command.msg.channel.id, {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
         color: caller.color.blue,
-        title: lang.title,
-        description: `**${command.prefix}${lang.submit.help}`,
+        title: lang.titles.use,
+        fields: [
+          {
+            name:
+              command.prefix + command.command + lang.commands.submit.params,
+            value: lang.commands.submit.help,
+          },
+        ],
       },
-    }).catch(console.error);
+    });
     return;
   }
-  const channel = command.msg.channel.guild.channels.get(guild.suggestion);
-  if (channel) {
-    if (guild.submitChannel) {
-      if (guild.submitChannel !== command.msg.channel.id) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            color: caller.color.yellow,
-            description: lang.suggestion.useChannel[0] + guild.submitChannel + lang.suggestion.useChannel[1],
-          },
-        }).then((m) => {
-          setTimeout(() => {
-            if (command.msg.channel.guild.members.get(caller.bot.user.id).permission.has('manageMessages')) command.msg.delete().catch(console.error);
-            m.delete().catch(console.error);
-          }, 5000);
-        }).catch(console.error);
-        return;
-      }
-    }
-    let card;
-    if (guild.trello && guild.trello.enabled) {
-      card = await caller.trello.addCard(`${command.msg.author.username}#${command.msg.author.discriminator}`, command.params.join(' '), guild.trello.list);
-    }
-    if (typeof card === 'string') card = undefined; // cause appearntly the creator of the trello package doesnt believe in rejecting errors
-    let message;
-    const id = Math.random().toString(36).substr(2, 5);
-    try {
-      const embed = {
+  if (!guild.suggestion.new) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.submit.noChannel,
+      },
+    });
+    return;
+  }
+  if (command.msg.channel.id !== guild.suggestion.submit) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.submit.wrongChannel.replace(
+          '$channel',
+          guild.suggestion.submit,
+        ),
+      },
+    });
+    return;
+  }
+  const suggestion = {
+    author: {
+      username: command.msg.author.username,
+      id: command.msg.author.id,
+      discriminator: command.msg.author.discriminator,
+      avatar: command.msg.author.avatarURL,
+    },
+    content: command.params.join(' '),
+    reason: null,
+    state: 'new',
+    id: uid.randomUUID(4),
+    message: '',
+    channel: guild.suggestion.new,
+    trello: null,
+  };
+
+  if (guild.trello.enabled && guild.trello.new) {
+    let card = await caller.trello.addCard(
+      lang.commands.submit.card.title.replace(
+        '$suggestion',
+        command.params.join(' ').substring(0, 31),
+      ),
+      lang.commands.submit.card.body
+        .replace('$suggestion', command.params.join(' '))
+        .replace(
+          '$user',
+          `${command.msg.author.username}#${command.msg.author.discriminator}`,
+        ),
+      guild.trello.new.id,
+    );
+    if (typeof card === 'string') card = undefined;
+    if (card) suggestion.trello = card.id;
+  }
+
+  let message;
+  try {
+    message = await caller.bot.createMessage(guild.suggestion.new, {
+      embed: {
+        color: caller.color.blue,
         author: {
-          name: `${command.msg.author.username}#${command.msg.author.discriminator}`,
+          name: command.msg.author.username,
           icon_url: command.msg.author.avatarURL,
         },
-        color: caller.color.blue,
-        fields: [{
-          name: lang.submit.title,
-          value: command.params.join(' '),
-        }],
+        description: suggestion.trello
+          ? `[Trello](https://trello.com/c/${suggestion.trello})`
+          : null,
+        fields: [
+          {
+            name: lang.suggestion.new,
+            value: command.params.join(' '),
+          },
+        ],
         footer: {
-          text: `ID: ${id}`,
+          text: `ID: ${suggestion.id}  ${lang.suggestion.submitted}`,
         },
-      };
-      if (card) {
-        embed.title = 'Trello';
-        embed.url = card.shortUrl;
-      }
-      message = await caller.bot.createMessage(guild.suggestion, {
-        embed,
-      });
-    } catch (e) {
-      caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
-      guild.suggestion = '';
-      caller.utils.updateGuild(guild);
-      return;
-    }
-    if (command.msg.channel.guild.members.get(caller.bot.user.id).permission.has('addReactions')) {
-      await caller.bot.addMessageReaction(guild.suggestion, message.id, '⬆').catch(console.error);
-      await caller.bot.addMessageReaction(guild.suggestion, message.id, '⬇').catch(console.error);
-    }
-    if (!guild.suggestions) guild.suggestions = [];
-    guild.suggestions.push({
-      user: command.msg.author.id,
-      suggestion: command.params.join(' '),
-      message: message.id,
-      id,
-      trello: (card) ? card.shortUrl : null,
-      channel: guild.suggestion,
+        timestamp: new Date(),
+      },
     });
-    caller.utils.updateGuild(guild);
-    if (command.msg.channel.guild.members.get(caller.bot.user.id).permission.has('manageMessages')) caller.bot.deleteMessage(command.msg.channel.id, command.msg.id).catch(console.error);
+  } catch (e) {
+    caller.logger.warn(
+      `[Submit] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+        /\n\s/g,
+        '',
+      )}`,
+    );
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.errors.generic,
+      },
+    });
   }
+  suggestion.message = message.id;
+  guild.suggestions.push(suggestion);
+  await caller.utils.updateGuild(guild);
+  if (guild.suggestion.reaction) {
+    let failed = false;
+    for (let index = 0; index < guild.suggestion.emojis.length; index += 1) {
+      if (failed) break;
+      await message
+        .addReaction(
+          guild.suggestion.emojis[index].replace(/(<:)|(<)|(>)/g, ''),
+        )
+        .catch((error) => {
+          if (error.code === 50001) failed = true;
+        });
+    }
+  }
+  caller.bot
+    .createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.green,
+        title: lang.titles.complete,
+        description: lang.commands.submit.success,
+      },
+    })
+    .then((m) => {
+      setTimeout(() => m.delete(), 5000);
+    })
+    .catch(caller.logger.warn);
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'suggestion',
-  };
+exports.Settings = {
+  command: 'submit',
+  category: 1,
+  show: true,
+  permissions: [],
+  dm: false,
 };

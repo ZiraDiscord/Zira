@@ -3,9 +3,8 @@
 exports.Run = async function Run(caller, guild, member, old) {
   const oldRoles = (old) ? old.roles : [];
   const newRoles = member.roles.map(r => r.id);
-  const [claimedUser] = await caller.db.Find('once', {
-    id: member.user.id,
-  });
+  const once = await caller.db.get('once');
+  const claimedUser = await once.findOne({ id: member.user.id });
   const diff = [];
   if (claimedUser && claimedUser.claimed.length !== 0) {
     oldRoles.forEach(async (key) => {
@@ -22,9 +21,7 @@ exports.Run = async function Run(caller, guild, member, old) {
         }
       });
       if (change) {
-        caller.db.Update('once', {
-          id: claimedUser.id,
-        }, claimedUser);
+        once.findOneAndUpdate({ id: claimedUser.id }, claimedUser);
       }
     }
   }

@@ -1,62 +1,33 @@
 'use strict';
 
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  const prefix = command.params[0];
+  if (!prefix || prefix.length < 1 || prefix.length > 10 || prefix.search(/[.?[\]\\/<>\-=+*^$!]/g) === -1) {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        description: ':warning: This command can\'t be used in DM',
+        title: lang.titles.error,
+        description: lang.commands.prefix.error,
         color: caller.color.yellow,
       },
-    }).catch(console.error);
+    });
     return;
   }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageGuild')) {
-    if (!command.params[0]) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.title,
-          color: caller.color.blue,
-          description: `**${command.prefix}${lang.prefix.help}`,
-        },
-      });
-      return;
-    }
-    const prefix = command.params.join(' ');
-    if (prefix.length < 1 || prefix.length > 10) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.titleError,
-          description: lang.prefix.error,
-          color: caller.color.yellow,
-        },
-      });
-      return;
-    }
-    guild.prefix = prefix;
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        title: lang.titleComp,
-        description: lang.prefix.set + guild.prefix,
-        color: caller.color.green,
-      },
-    });
-    caller.utils.updateGuild(guild);
-  } else {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        title: lang.titleError,
-        description: lang.perm.noGuildPerm,
-        color: caller.color.yellow,
-      },
-    });
-  }
+  guild.prefix = prefix;
+  caller.utils.updateGuild(guild);
+  caller.utils.createMessage(command.msg.channel.id, {
+    embed: {
+      title: lang.titles.complete,
+      description: lang.commands.prefix.set + guild.prefix,
+      color: caller.color.green,
+    },
+  });
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'misc',
-  };
+exports.Settings = {
+  command: 'prefix',
+  category: 3,
+  show: true,
+  permissions: ['manageGuild'],
+  dm: false,
 };

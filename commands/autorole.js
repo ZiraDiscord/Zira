@@ -1,185 +1,219 @@
 'use strict';
 
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        description: ':warning: This command can\'t be used in DM',
-        color: caller.color.yellow,
-      },
-    }).catch(console.error);
-    return;
-  }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
-    if (typeof guild.user === 'undefined') {
-      guild.user = [];
-    }
-    if (typeof guild.bot === 'undefined') {
-      guild.bot = [];
-    }
-    if (typeof guild.user === 'string') {
-      guild.user = [guild.user];
-    }
-    if (typeof guild.bot === 'string') {
-      guild.bot = [guild.bot];
-    }
-    switch (command.params[0]) {
-    case 'user':
-      {
-        if (!command.params[1]) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.title,
-              color: caller.color.blue,
-              description: `**${command.prefix}${lang.auto.user}`,
-            },
-          }).catch(console.error);
-          return;
-        }
-        let guildrole;
-        if (command.params[1].indexOf('<@&') !== -1 || isNaN(command.params[1]) === false) {
-          [guildrole] = command.msg.channel.guild.roles.filter(r => r.id === command.params[1].replace(/\D/g, ''));
-        } else {
-          const rolename = command.params.splice(1).join(' ').toLowerCase();
-          [guildrole] = command.msg.channel.guild.roles.filter(m => m.name.toLowerCase() === rolename);
-        }
-        if (!guildrole) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleError,
-              color: caller.color.yellow,
-              description: lang.delete.unknown,
-            },
-          }).catch(console.error);
-          return;
-        }
-        if (guild.user.indexOf(guildrole.id) !== -1) {
-          const old = guild.user[guild.user.indexOf(guildrole.id)];
-          guild.user.splice(guild.user.indexOf(guildrole.id), 1);
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleComp,
-              color: caller.color.green,
-              description: lang.auto.userRemove[0] + old + lang.auto.userRemove[1],
-            },
-          }).catch(console.error);
-          caller.utils.updateGuild(guild);
-        } else {
-          guild.user.push(guildrole.id);
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleComp,
-              color: caller.color.green,
-              description: lang.auto.userAdd[0] + guildrole.id + lang.auto.userAdd[1],
-            },
-          }).catch(console.error);
-          caller.utils.updateGuild(guild);
-        }
-        break;
-      }
-    case 'bot':
-      {
-        if (!command.params[1]) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.title,
-              color: caller.color.blue,
-              description: `**${command.prefix}${lang.auto.bot}`,
-            },
-          }).catch(console.error);
-          return;
-        }
-        let guildrole;
-        if (command.params[1].indexOf('<@&') !== -1 || isNaN(command.params[1]) === false) {
-          [guildrole] = command.msg.channel.guild.roles.filter(r => r.id === command.params[1].replace(/\D/g, ''));
-        } else {
-          const rolename = command.params.splice(1).join(' ').toLowerCase();
-          [guildrole] = command.msg.channel.guild.roles.filter(m => m.name.toLowerCase() === rolename);
-        }
-        if (!guildrole) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleError,
-              color: caller.color.yellow,
-              description: lang.delete.unknown,
-            },
-          }).catch(console.error);
-          return;
-        }
-        if (guild.bot.indexOf(guildrole.id) !== -1) {
-          const old = guild.bot[guild.bot.indexOf(guildrole.id)];
-          guild.bot.splice(guild.bot.indexOf(guildrole.id), 1);
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleComp,
-              color: caller.color.green,
-              description: lang.auto.botRemove[0] + old + lang.auto.botRemove[1],
-            },
-          }).catch(console.error);
-          caller.utils.updateGuild(guild);
-        } else {
-          guild.bot.push(guildrole.id);
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleComp,
-              color: caller.color.green,
-              description: lang.auto.botAdd[0] + guildrole.id + lang.auto.botAdd[1],
-            },
-          }).catch(console.error);
-          caller.utils.updateGuild(guild);
-        }
-        break;
-      }
-    case 'show':
-      {
-        let user = (guild.user[0]) ? '' : lang.auto.no;
-        let bot = (guild.bot[0]) ? '' : lang.auto.no;
-        guild.user.forEach((id) => {
-          user += `<@&${id}>\n`;
-        });
-        guild.bot.forEach((id) => {
-          bot += `<@&${id}>\n`;
-        });
-        caller.utils.message(command.msg.channel.id, {
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  switch (command.params[0]) {
+    case 'user': {
+      if (!command.params[1]) {
+        caller.utils.createMessage(command.msg.channel.id, {
           embed: {
-            title: lang.auto.title,
+            title: lang.titles.use,
             color: caller.color.blue,
-            fields: [{
-              name: lang.auto.showUser,
-              value: user,
-            }, {
-              name: lang.auto.showBot,
-              value: bot,
-            }],
+            fields: [
+              {
+                name:
+                  command.prefix +
+                  command.command +
+                  lang.commands.autorole.ubParams,
+                value: lang.commands.message.user,
+              },
+            ],
           },
-        }).catch(console.error);
-        break;
+        });
+        return;
       }
-    default:
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.auto.title,
-          description: `**${command.prefix}${lang.auto.help[0]}${command.prefix}${lang.auto.help[1]}${command.prefix}${lang.auto.help[2]}`,
-          color: caller.color.blue,
-        },
-      }).catch(console.error);
+      let guildrole;
+      if (
+        command.params[1].indexOf('<@&') !== -1 ||
+        isNaN(command.params[1]) === false
+      ) {
+        [guildrole] = command.guild.roles.filter(
+          (r) => r.id === command.params[1].replace(/\D/g, ''),
+        );
+      } else {
+        const rolename = command.params
+          .splice(1)
+          .join(' ')
+          .toLowerCase();
+        [guildrole] = command.guild.roles.filter(
+          (m) => m.name.toLowerCase() === rolename,
+        );
+      }
+      if (!guildrole) {
+        caller.utils
+          .createMessage(command.msg.channel.id, {
+            embed: {
+              title: lang.titles.error,
+              color: caller.color.yellow,
+              description: lang.errors.unknownRole,
+            },
+          });
+        return;
+      }
+      if (guild.user.indexOf(guildrole.id) !== -1) {
+        const old = guild.user[guild.user.indexOf(guildrole.id)];
+        guild.user.splice(guild.user.indexOf(guildrole.id), 1);
+        caller.utils
+          .createMessage(command.msg.channel.id, {
+            embed: {
+              title: lang.titles.complete,
+              color: caller.color.green,
+              description: lang.commands.autorole.userRemove.replace('$role', `<@&${old}>`),
+            },
+          });
+        caller.utils.updateGuild(guild);
+      } else {
+        guild.user.push(guildrole.id);
+        caller.utils
+          .createMessage(command.msg.channel.id, {
+            embed: {
+              title: lang.titles.complete,
+              color: caller.color.green,
+              description: lang.commands.autorole.userAdd.replace('$role', `<@&${guildrole.id}>`),
+            },
+          });
+        caller.utils.updateGuild(guild);
+      }
+      break;
     }
-  } else {
-    caller.utils.message(command.msg.channel.id, {
+    case 'bot': {
+      if (!command.params[1]) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.use,
+            color: caller.color.blue,
+            fields: [
+              {
+                name:
+                  command.prefix +
+                  command.command +
+                  lang.commands.autorole.ubParams,
+                value: lang.commands.message.bot,
+              },
+            ],
+          },
+        });
+        return;
+      }
+      let guildrole;
+      if (
+        command.params[1].indexOf('<@&') !== -1 ||
+        isNaN(command.params[1]) === false
+      ) {
+        [guildrole] = command.guild.roles.filter(
+          (r) => r.id === command.params[1].replace(/\D/g, ''),
+        );
+      } else {
+        const rolename = command.params
+          .splice(1)
+          .join(' ')
+          .toLowerCase();
+        [guildrole] = command.guild.roles.filter(
+          (m) => m.name.toLowerCase() === rolename,
+        );
+      }
+      if (!guildrole) {
+        caller.utils
+          .createMessage(command.msg.channel.id, {
+            embed: {
+              title: lang.titles.error,
+              color: caller.color.yellow,
+              description: lang.errors.unknownRole,
+            },
+          });
+        return;
+      }
+      if (guild.bot.indexOf(guildrole.id) !== -1) {
+        const old = guild.bot[guild.bot.indexOf(guildrole.id)];
+        guild.bot.splice(guild.bot.indexOf(guildrole.id), 1);
+        caller.utils
+          .createMessage(command.msg.channel.id, {
+            embed: {
+              title: lang.titles.complete,
+              color: caller.color.green,
+              description: lang.commands.autorole.botRemove.replace('$role', `<@&${old}>`),
+            },
+          });
+        caller.utils.updateGuild(guild);
+      } else {
+        guild.bot.push(guildrole.id);
+        caller.utils
+          .createMessage(command.msg.channel.id, {
+            embed: {
+              title: lang.titles.complete,
+              color: caller.color.green,
+              description: lang.commands.autorole.botAdd.replace('$role', `<@&${guildrole.id}>`),
+            },
+          });
+        caller.utils.updateGuild(guild);
+      }
+      break;
+    }
+    case 'show': {
+      let user = guild.user[0] ? '' : lang.commands.autorole.nonSet;
+      let bot = guild.bot[0] ? '' : lang.commands.autorole.nonSet;
+      guild.user.forEach((id) => {
+        user += `<@&${id}>\n`;
+      });
+      guild.bot.forEach((id) => {
+        bot += `<@&${id}>\n`;
+      });
+      caller.utils
+        .createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.commands.autorole.title,
+            color: caller.color.blue,
+            fields: [
+              {
+                name: lang.commands.autorole.showUser,
+                value: user,
+              },
+              {
+                name: lang.commands.autorole.showBot,
+                value: bot,
+              },
+            ],
+          },
+        });
+      break;
+    }
+    default:
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        title: lang.titleError,
-        description: lang.perm.noPerm,
-        color: caller.color.yellow,
+        color: caller.color.blue,
+        title: lang.titles.use,
+        fields: [
+          {
+            name:
+              command.prefix +
+              command.command +
+              lang.commands.autorole.main[0].name,
+            value: lang.commands.autorole.main[0].value,
+          },
+          {
+            name:
+              command.prefix +
+              command.command +
+              lang.commands.autorole.main[1].name,
+            value: lang.commands.autorole.main[1].value,
+          },
+          {
+            name:
+              command.prefix +
+              command.command +
+              lang.commands.autorole.main[2].name,
+            value: lang.commands.autorole.main[2].value,
+          },
+        ],
       },
-    }).catch(console.error);
+    });
   }
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'role',
-  };
+exports.Settings = {
+  command: 'TEMPLATE',
+  category: 0,
+  show: false,
+  permissions: ['manageMessages'],
+  dm: false,
 };

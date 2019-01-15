@@ -1,85 +1,51 @@
 'use strict';
 
-const numeral = require('numeral');
-const table = require('text-table');
-
-exports.Run = async function Run(caller, command) {
-  const res = await caller.ipc.getStats(command.msg.id);
-  if (command.params[0] === 'full') {
-    const arr = [
-      ['Cluster', 'Shards', 'Commands', 'Mesages', 'Guilds', 'Users', 'Bots', 'Memory', 'Uptime'],
-    ];
-    let totalShards = 0;
-    let totalCommands = 0;
-    let totalMessages = 0;
-    let totalGuilds = 0;
-    let totalUsers = 0;
-    let totalBots = 0;
-    let totalMemory = 0;
-    Object.keys(res.stats).forEach((key) => {
-      const cluster = res.stats[key];
-      if (cluster.cluster === caller.id) {
-        arr.push([`${cluster.cluster}*`, cluster.shards, numeral(cluster.commands).format('0,0'), numeral(cluster.messages).format('0,0'), numeral(cluster.guilds.length).format('0,0'), numeral(cluster.users).format('0,0'), numeral(cluster.bots).format('0,0'), cluster.memory, cluster.uptime]);
-      } else {
-        arr.push([`${cluster.cluster}`, cluster.shards, numeral(cluster.commands).format('0,0'), numeral(cluster.messages).format('0,0'), numeral(cluster.guilds.length).format('0,0'), numeral(cluster.users).format('0,0'), numeral(cluster.bots).format('0,0'), cluster.memory, cluster.uptime]);
-      }
-      totalShards += cluster.shards;
-      totalCommands += cluster.commands;
-      totalMessages += cluster.messages;
-      totalGuilds += cluster.guilds.length;
-      totalUsers += cluster.users;
-      totalBots += cluster.bots;
-      totalMemory += numeral(cluster.memory).value();
-    });
-    arr.push(['Total', totalShards, numeral(totalCommands).format('0,0'), numeral(totalMessages).format('0,0'), numeral(totalGuilds).format('0,0'), numeral(totalUsers).format('0,0'), numeral(totalBots).format('0,0'), numeral(totalMemory.toFixed(2)).format('0,0'), ' ']);
-    caller.utils.message(command.msg.channel.id, `\`\`\`prolog\n${table(arr)}\n\`\`\``).catch(console.error);
-    return;
-  }
-  const [cl] = await caller.db.Find('changelog', {
-    id: 0,
-  });
-  let guilds = 0;
-  Object.keys(res.stats).forEach((key) => {
-    guilds += res.stats[key].guilds.length;
-  });
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  const changelog = await caller.utils.getChangelog();
   const embed = {
-    embed: {
-      color: caller.color.blue,
-      fields: [{
-        name: 'Version',
+    color: caller.color.blue,
+    fields: [
+      {
+        name: lang.commands.info.fields[0],
+        value: changelog.version,
         inline: true,
-        value: cl.version,
-      }, {
-        name: 'Guilds',
-        inline: true,
-        value: numeral(guilds).format('0,0'),
-      }, {
-        name: 'Library',
-        inline: true,
-        value: '[Eris](https://abal.moe/Eris/)',
-      }, {
-        name: 'Made By',
-        inline: true,
-        value: 'Hazed SPaCEx#2574',
-      }],
-      footer: {
-        text: `Cluster: ${caller.id} Shard: ${(command.msg.channel.guild) ? command.msg.channel.guild.shard.id : 0} | Uptime: ${caller.utils.getTime(caller.bot.startTime)}`,
       },
+      {
+        name: lang.commands.info.fields[1],
+        value: lang.help.links[1],
+        inline: true,
+      },
+      {
+        name: lang.commands.info.fields[2],
+        value: '[Eris](https://abal.moe/Eris/)',
+        inline: true,
+      },
+      {
+        name: lang.commands.info.fields[3],
+        value: 'Hazed SPaCEx#2574\nJakeyPrime#0001',
+        inline: true,
+      },
+    ],
+    footer: {
+      text: `Cluster: ${caller.id} Shard: ${(command.guild) ? command.guild.shard.id : 0} | Uptime: ${caller.utils.getTime(caller.bot.startTime)}`,
     },
   };
-  if (cl.changes) {
-    embed.embed.fields.push({
-      name: 'Changelog',
-      value: cl.changelog,
-      inline: true,
+  if (changelog.changes) {
+    embed.fields.push({
+      name: lang.commands.info.fields[4],
+      value: changelog.changelog,
     });
   }
-  caller.utils.message(command.msg.channel.id, embed).catch(console.error);
+  caller.utils.createMessage(command.msg.channel.id, {
+    embed,
+  });
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'misc',
-  };
+exports.Settings = {
+  category: 3,
+  command: 'info',
+  show: true,
+  permissions: [],
+  dm: true,
 };

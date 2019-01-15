@@ -1,159 +1,216 @@
 'use strict';
 
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  if (command.params.length < 2) {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        description: ':warning: This command can\'t be used in DM',
-        color: caller.color.yellow,
+        color: caller.color.blue,
+        title: lang.titles.use,
+        fields: [
+          {
+            name: command.prefix + command.command + lang.commands.once.params,
+            value: `${lang.commands.once.help}\n${
+              lang.commands.add.description
+            }`,
+          },
+          {
+            name: lang.example,
+            value: `${command.prefix +
+              command.command} :information_source: Updates\n${command.prefix +
+              command.command} :information_source: Updates, <:thirp:450747331512369152> ${
+              caller.utils.getRandomElement(
+                command.roles.filter((r) => r.name !== '@everyone'),
+              ).mention
+            }\n\n[${lang.guidePage}](https://zira.pw/guide/${command.command})`,
+          },
+        ],
       },
-    }).catch(console.error);
+    });
     return;
   }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
-    if (!command.params[0] || !command.params[1] || !command.params[2]) {
-      const ROLES = command.msg.channel.guild.roles.filter(r => r.id !== command.msg.channel.guild.id);
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          color: caller.color.blue,
-          title: lang.title,
-          description: `**${command.prefix}${lang.multi.help}\n\n${lang.example}${command.prefix}multi :information_source: Updates, <@&${ROLES[caller.utils.randomNumber(0, ROLES.length - 1)].id}>\n${command.prefix}multi :information_source: Updates, <@&${ROLES[caller.utils.randomNumber(0, ROLES.length - 1)].id}>, <@&${ROLES[caller.utils.randomNumber(0, ROLES.length - 1)].id}>`,
-        },
-      }).catch(console.error);
-      return;
-    }
-    if (!guild.chan) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.titleError,
-          description: lang.noChannel[0] + command.prefix + lang.noChannel[1],
-          color: caller.color.yellow,
-        },
-      }).catch(console.error);
-      return;
-    }
-    if (!guild.emoji || !guild.msgid.length) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.titleError,
-          description: lang.noMessage[0] + command.prefix + lang.noMessage[1],
-          color: caller.color.yellow,
-        },
-      }).catch(console.error);
-      return;
-    }
-    const emoji = command.params[0];
-    const Params = command.params.splice(1).join(' ').split(', ');
-    Params.forEach((item, index) => {
-      if (item.indexOf('<@&') !== -1) Params[index] = item.replace(/\D+/g, '');
-    });
-    const roles = [];
-    for (let i = 0; i < Params.length; i++) {
-        // eslint-disable-next-line no-loop-func
-        const [role] = command.msg.channel.guild.roles.filter(r => r.id === Params[i] || r.name.toLowerCase().indexOf(Params[i].toLowerCase()) !== -1);
-        if (!role) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleError,
-              description: lang.unknownRole[0] + caller.utils.ordinalSuffix(i + 1) + lang.unknownRole[1],
-              color: caller.color.yellow,
-            },
-          }).catch(console.error);
-          return;
-        }
-        roles.push(role.id);
-    }
-    let emojiFree = true;
-    for (let r = 0; r < guild.roles.length; r++) {
-      if (guild.roles[r].msg === guild.emoji) {
-        if (guild.roles[r].emoji === emoji) emojiFree = false;
-      }
-    }
-    if (!emojiFree) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.titleError,
-          description: lang.add.emoji[0] + emoji + lang.add.emoji[1],
-          color: caller.color.yellow,
-        },
-      }).catch(console.error);
-      return;
-    }
-    try {
-      await caller.bot.addMessageReaction(guild.chan, guild.emoji, emoji.replace(/(<:)|(<)|(>)/g, ''));
-    } catch (e) {
-      caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
-      if (e.code === 50001) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.add.cannotRead[0] + emoji + lang.add.cannotRead[1] + guild.chan + lang.add.cannotRead[2],
-            color: caller.color.yellow,
-          },
-        }).catch(console.error);
-      } else if (e.code === 50013) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.add.cannotReact[0] + emoji + lang.add.cannotReact[1] + guild.chan + lang.add.cannotReact[2],
-            color: caller.color.yellow,
-          },
-        }).catch(console.error);
-      } else if (e.code === 10014) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.unknownEmoji[0] + caller.utils.ordinalSuffix(1) + lang.unknownEmoji[1],
-            color: caller.color.yellow,
-          },
-        }).catch(console.error);
-      } else {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: `${lang.add.unknown[0]}${emoji}${lang.add.unknown[1]}${guild.chan}>`,
-            color: caller.color.yellow,
-          },
-        }).catch(console.error);
-      }
-      return;
-    }
-    let message = '';
-    roles.forEach((id, index) => {
-      message += `<@&${id}>${(index === roles.length - 1) ? ' ' : ', '}`;
-    });
-    guild.roles.push({
-      ids: roles,
-      name: message,
-      emoji,
-      msg: guild.emoji,
-      channel: guild.chan,
-      multi: true,
-    });
-    caller.utils.message(command.msg.channel.id, {
+  if (
+    !guild.currentChannel ||
+    !guild.currentMessage ||
+    !guild.messages.length
+  ) {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        title: lang.titleComp,
-        description: message + lang.multi.set[0] + emoji + lang.multi.set[1],
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.errors.setChannelOrMessage,
+      },
+    });
+    return;
+  }
+  if (
+    process.env.PREMIUM &&
+    !guild.premium &&
+    guild.roles.filter((r) => r.toggle).length > 11
+  ) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.toggle.limit,
+      },
+    });
+    return;
+  }
+  const emoji = command.params[0];
+  const params = command.params
+    .splice(1)
+    .join(' ')
+    .split(', ');
+  params.forEach((item, index) => {
+    if (item.indexOf('<@&') !== -1) params[index] = item.replace(/\D+/g, '');
+  });
+  if (
+    process.env.PREMIUM &&
+    !guild.premium &&
+    guild.roles.filter((r) => r.toggle).length + params.length > 11
+  ) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.toggle.over,
+      },
+    });
+    return;
+  }
+  const roles = [];
+  for (let index = 0; index < params.length; index++) {
+    const [role] = command.guild.roles.filter(
+      (r) => r.id === params[index] || r.name.toLowerCase() === params[index].toLowerCase(),
+    );
+    if (!role) {
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          color: caller.color.yellow,
+          title: lang.titles.error,
+          description: lang.commands.multi.ordinal.replace(
+            '$pos',
+            caller.utils.ordinalSuffix(index + 1),
+          ),
+        },
+      });
+      return;
+    }
+    roles.push(role.id);
+  }
+  let free = true;
+  for (let i = 0; i < guild.roles.length; i++) {
+    if (guild.roles[i].message === guild.currentMessage) {
+      if (guild.roles[i].emoji === emoji) free = false;
+    }
+  }
+  if (!free) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.commands.multi.usedEmoji,
+      },
+    });
+    return;
+  }
+  try {
+    await caller.bot.addMessageReaction(
+      guild.currentChannel,
+      guild.currentMessage,
+      emoji.replace(/(<:)|(<)|(>)/g, ''),
+    );
+  } catch (e) {
+    caller.logger.warn(
+      `[Multi] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+        /\n\s/g,
+        '',
+      )}`,
+    );
+    switch (e.code) {
+      case 10003:
+      case 50001: // read access
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.missingPermissionChannelRead,
+          },
+        });
+        break;
+      case 50013: // reaction access
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.missingPermissionChannelReaction,
+          },
+        });
+        break;
+      case 10008: // unknown message
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.unknownMessage,
+          },
+        });
+        break;
+      case 10014: // unknown emoji
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.unknownEmoji,
+          },
+        });
+        break;
+      default:
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.generic,
+          },
+        });
+    }
+    return;
+  }
+  let name = '';
+  roles.forEach((role, index) => {
+    name += `<@&${role}>${index === roles.length - 1 ? '' : ', '}`;
+  });
+  guild.roles.push({
+    ids: roles,
+    name,
+    emoji,
+    message: guild.currentMessage,
+    channel: guild.currentChannel,
+    multi: true,
+  });
+
+  let description = '';
+    description += lang.commands.multi.set
+      .replace('$roles', name)
+      .replace('$emoji', emoji);
+  if (description) {
+    description += `\n${lang.footer}`;
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        title: lang.titles.complete,
+        description,
         color: caller.color.green,
       },
-    }).catch(console.error);
-    caller.utils.updateGuild(guild);
-  } else {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        title: lang.titleError,
-        description: lang.perm.noPerm,
-        color: caller.color.yellow,
-      },
-    }).catch(console.error);
+    });
   }
+  caller.utils.updateGuild(guild);
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'role',
-  };
+exports.Settings = {
+  category: 0,
+  command: 'multi',
+  show: true,
+  permissions: ['manageRoles'],
+  dm: false,
 };

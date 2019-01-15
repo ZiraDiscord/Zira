@@ -1,36 +1,121 @@
 'use strict';
 
-const Logger = require('disnode-logger');
 const fs = require('fs');
+const logger = require('./logger');
+const DB = require('./DB');
+
+/**
+ * @typedef {Object} Permissions
+ * @property {boolean} hasPermissions User has all permissions or not
+ * @property {Array} missing Array of missing permissions
+ */
 
 class Utils {
+  /**
+   * @constructor
+   * @param {Object} caller - this of Zira.js
+   * @param {Object} caller.bot - Eris client
+   */
   constructor(caller) {
-    this.db = caller.db;
+    this.db = DB;
     this.bot = caller.bot;
     this.caller = caller;
+    this.schema();
   }
 
-  async message(channel, content) {
+  /**
+   * Make sure all collections are in the database
+   */
+  async schema() {
+    if (this.caller.id !== 0) return;
+    await this.db.create('reaction');
+    await this.db.create('users');
+    await this.db.create('premium');
+    if (process.env.API) {
+      const statsCollection = await this.db.create('stats');
+      const stats = await statsCollection.findOne({ id: 0 });
+      if (!stats) {
+        await statsCollection.insert({
+          id: 0,
+          clusters: {},
+        });
+      }
+    }
+    const changelog = await this.db.create('changelog');
+    const log = await changelog.findOne({ id: 0 });
+    if (!log) {
+      await changelog.insert({
+        id: 0,
+        version: '0.0.0',
+        changes: false,
+        changelog: '',
+      });
+    }
+    logger.info('[Utils] Schema');
+  }
+
+  /**
+   * Send a message to a channel
+   * @async
+   * @param {snowflake} channel - Channel ID
+   * @param {Object|string} content - Embed or String
+   */
+  async createMessage(channel, content) {
     try {
       await this.bot.createMessage(channel, content);
     } catch (e) {
-      this.caller.Logger.Warning('Message', ` ${channel} `, e.message.replace(/\n\s/g, ''));
+      logger.warn(
+        `[Message Error] ${channel} ${e.message.replace(/\n\s/g, '')}`,
+      );
       if (e.code === 50013) {
-        this.bot.createMessage(channel, 'I\'m unable to send the message as I\'m missing the permission `Embed Links` in this channel.').catch(err => this.caller.Logger.Warning('Error Message', ` ${channel} `, err.message.replace(/\n\s/g, '')));
+        this.bot
+          .createMessage(
+            channel,
+            "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.",
+          )
+          .catch((err) => {
+            logger.warn(
+              `[Message Error] ${channel} ${err.message.replace(/\n\s/g, '')}`,
+            );
+          });
       }
     }
   }
 
+  /**
+   * Get the date from a snowflake
+   * @param {snowflake} resourceID - User/Guild/Channel/Message ID
+   * @returns {Date} Date of snowflakes creation
+   */
   snowflakeDate(resourceID) {
     return new Date(parseInt(resourceID) / 4194304 + 1420070400000); // eslint-disable-line
   }
 
+  /**
+   * Returns random number
+   * @param {number} min - Minimum number
+   * @param {number} max - Maximum number
+   * @returns {number} Random number between min and max
+   */
   randomNumber(min, max) {
     const first = Math.ceil(min);
     const second = Math.floor(max);
-    return Math.floor(Math.random() * ((second - first) + 1)) + first;
+    return Math.floor(Math.random() * (second - first + 1)) + first;
   }
 
+  getRandomElement(array) {
+    return array[this.randomNumber(0, array.length - 1)];
+  }
+
+  parseID(input) {
+    return input.replace(/\D+/g, '');
+  }
+
+  /**
+   * Get time between now and a date
+   * @param {Date} time - Date
+   * @returns {string} Formatted date
+   */
   getTime(time) {
     const currentTime = new Date();
     const elapsed = currentTime - time;
@@ -38,7 +123,7 @@ class Utils {
     let days = 0;
     let hours = 0;
     let minutes = 0;
-    let seconds = parseInt(elapsed / 1000); // eslint-disable-line
+    let seconds = parseInt(elapsed / 1000, 10);
     while (seconds >= 60) {
       minutes++;
       seconds -= 60;
@@ -100,16 +185,41 @@ class Utils {
   }
 
   ordinalSuffix(i) {
-    if ((i % 10) === 1 && (i % 100) !== 11) {
+    if (i % 10 === 1 && i % 100 !== 11) {
       return `${i}st`;
     }
-    if ((i % 10) === 2 && (i % 100) !== 12) {
+    if (i % 10 === 2 && i % 100 !== 12) {
       return `${i}nd`;
     }
-    if ((i % 10) === 3 && (i % 100) !== 13) {
+    if (i % 10 === 3 && i % 100 !== 13) {
       return `${i}rd`;
     }
     return `${i}th`;
+  }
+
+  /**
+   * Get language file
+   * @param {Object} guild - Guild object
+   * @param {string} guild.lang - Language code
+   */
+  // eslint-disable-next-line consistent-return
+  getLang(
+    guild = {
+      lang: 'en',
+    },
+  ) {
+    let { lang } = guild;
+    if (!guild.lang) lang = 'en';
+    if (!fs.existsSync(`./lang/${lang}.json`)) lang = 'en';
+    try {
+      return require(`../lang/${lang}.json`); // eslint-disable-line
+    } catch (e) {
+      logger.error(
+        `[Lang Error] Error when getting file: ${lang} :: ${JSON.stringify(e)}`,
+      );
+    } finally {
+      delete require.cache[require.resolve(`../lang/${lang}.json`)];
+    }
   }
 
   combine(First, Second) {
@@ -127,23 +237,6 @@ class Utils {
     return res;
   }
 
-  getLang(guild = { // eslint-disable-line
-    lang: 'en',
-  }) {
-    let {
-      lang,
-    } = guild;
-    if (!guild.lang) lang = 'en';
-    if (!fs.existsSync(`./lang/${lang}.json`)) lang = 'en';
-    try {
-      return require(`../lang/${lang}.json`); // eslint-disable-line
-    } catch (e) {
-      Logger.Error('Utils', 'getLang', `Error when getting file: ${lang} :: ${e}`);
-    } finally {
-      delete require.cache[require.resolve(`../lang/${lang}.json`)];
-    }
-  }
-
   parseParams(Params) {
     const params = [];
     let string = '';
@@ -158,32 +251,80 @@ class Utils {
     return params;
   }
 
+  /**
+   * Get guild from Mongo
+   * @async
+   * @param {snowflake} id - Guild ID
+   * @returns {Object} Guild object
+   */
   async getGuild(id) {
-    const self = this;
-    let guild = await self.db.Find('reaction', {
-      id,
-    });
-    [guild] = guild;
+    const guilds = await this.db.get('reaction');
+    let guild = await guilds.findOne({ id });
     if (!guild) {
       guild = {
         id,
+        name: null,
+        icon: null,
         roles: [],
-        msgid: [],
-        chan: '',
+        messages: [],
+        currentChannel: null,
+        currentMessage: null,
+        log: null,
+        joinChannel: null,
+        joinMessage: [],
+        leaveChannel: null,
+        leaveMessage: null,
+        bot: [],
+        user: [],
+        premium: false,
+        premiumExpires: null,
+        premiumUsers: {},
+        suggestions: [],
+        suggestion: {
+          submit: null,
+          dm: false,
+          role: null,
+          new: null,
+          approved: null,
+          denied: null,
+          invalid: null,
+          potential: null,
+          reaction: false,
+          emojis: ['👍', '👎'],
+        },
+        prefix: null,
+        lang: 'en',
+        commandRole: null,
+        trello: {
+          enabled: false,
+          board: null,
+          new: null,
+          approved: null,
+          denied: null,
+          potential: null,
+          invalid: null,
+        },
       };
-      self.db.Insert('reaction', guild);
+      await guilds.insert(guild);
     }
+    guild = await this.configCheck(guild); // Doing this for when rewrite is live as the databse will have the old configs
     return guild;
   }
 
+  /**
+   * Update guild object
+   * @async
+   * @param {Object} guild - Guild object
+   */
   async updateGuild(guild) {
-    const self = this;
-    const {
-      id,
-    } = guild;
-    await self.db.Update('reaction', {
-      id,
-    }, guild);
+    const guilds = await this.db.get('reaction');
+    await guilds.findOneAndUpdate({ id: guild.id }, guild);
+  }
+
+  async getChangelog() {
+    const changelog = await this.db.get('changelog');
+    const res = await changelog.findOne({ id: 0 });
+    return res;
   }
 
   mapObj(map) {
@@ -194,21 +335,211 @@ class Utils {
     return obj;
   }
 
-  postStats(caller) {
+  async postStats(caller) {
     process.send({
       name: 'stats',
       data: {
         messages: caller.handler.seen,
         commands: caller.handler.commands,
-        users: caller.bot.users.filter(u => !u.bot).length,
-        bots: caller.bot.users.filter(u => u.bot).length,
-        guilds: caller.bot.guilds.map(g => g.id),
-        memory: (process.memoryUsage().rss / 1024 / 1024).toFixed(2),
+        users: caller.bot.users.filter((u) => !u.bot).length,
+        bots: caller.bot.users.filter((u) => u.bot).length,
+        guilds: caller.bot.guilds.map((g) => g.id),
+        memory: parseFloat((process.memoryUsage().rss / 1024 / 1024).toFixed(2), 10),
         uptime: caller.utils.getTime(caller.bot.startTime),
         cluster: caller.id,
         shards: caller.bot.shards.size,
+        latency: caller.bot.shards.map(shard => shard.latency),
       },
     });
+    if (!process.env.API) return;
+    const statsCollection = await caller.db.get('stats');
+    const ipc = await caller.ipc.getStats(new Date().getTime());
+    await statsCollection.findOneAndUpdate({ id: 0 }, { id: 0, clusters: ipc.stats });
+  }
+
+  /**
+   * Checks user permissions
+   * @param {Object} userPermissions - Object of user permissions
+   * @param {Array} permissionsToCheck - Array of permissions to check
+   * @returns {Permissions}
+   */
+  checkPermissions(userPermissions, permissionsToCheck) {
+    let hasPermission = true;
+    const missing = [];
+    permissionsToCheck.forEach((permission) => {
+      if (!userPermissions[permission]) {
+        hasPermission = false;
+        missing.push(permission);
+      }
+    });
+    return { hasPermission, missing };
+  }
+
+  async pagination(pages, channel, user, page = 0) {
+    let currentPage = 0;
+    let message;
+    try {
+      message = await this.bot.createMessage(channel, pages[page]);
+    } catch (e) {
+      logger.warn(
+        `[Message Error] ${channel} ${e.message.replace(/\n\s/g, '')}`,
+      );
+      if (e.code === 50013) {
+        this.bot
+          .createMessage(
+            channel,
+            "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.",
+          )
+          .catch((err) => {
+            logger.warn(
+              `[Message Error] ${channel} ${err.message.replace(/\n\s/g, '')}`,
+            );
+          });
+      }
+    }
+    if (pages.length === 1) return;
+    await this.bot
+      .addMessageReaction(channel, message.id, '⬅')
+      .catch(console.error);
+    await this.bot
+      .addMessageReaction(channel, message.id, '◀')
+      .catch(console.error);
+    await this.bot
+      .addMessageReaction(channel, message.id, '▶')
+      .catch(console.error);
+    await this.bot
+      .addMessageReaction(channel, message.id, '➡')
+      .catch(console.error);
+    const handler = (msg, emoji, usr) => {
+      if (msg.id === message.id) {
+        if (usr === user) {
+          switch (emoji.name) {
+            case '⬅':
+              currentPage = 0;
+              this.bot
+                .editMessage(channel, message.id, pages[0])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '⬅', user)
+                .catch(console.error);
+              break;
+            case '◀':
+              currentPage -= 1;
+              if (currentPage < 0) currentPage = 0;
+              this.bot
+                .editMessage(channel, message.id, pages[currentPage])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '◀', user)
+                .catch(console.error);
+              break;
+            case '▶':
+              currentPage += 1;
+              if (currentPage > pages.length - 1) {
+                currentPage = pages.length - 1;
+              }
+              this.bot
+                .editMessage(channel, message.id, pages[currentPage])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '▶', user)
+                .catch(console.error);
+              break;
+            case '➡':
+              currentPage = pages.length - 1;
+              this.bot
+                .editMessage(channel, message.id, pages[pages.length - 1])
+                .catch(console.error);
+              this.bot
+                .removeMessageReaction(channel, message.id, '➡', user)
+                .catch(console.error);
+              break;
+            default:
+          }
+        }
+      }
+    };
+    const { bot } = this;
+    this.bot.on('messageReactionAdd', handler);
+    setTimeout(() => bot.off('messageReactionAdd', handler), 300000);
+  }
+
+  async configCheck(config) {
+    const premiumCollection = await this.db.get('premium');
+    let premium = await premiumCollection.findOne({ id: config.id });
+    if (!premium) premium = { premium: false, premiumExpires: null, premiumUsers: {} };
+    const roles = [];
+    config.roles.forEach((role) => {
+      if (role.msg) {
+        role.message = role.msg;
+        delete role.msg;
+      }
+      roles.push(role);
+    });
+    let { joinMessage } = config;
+    if (typeof joinMessage === 'string') joinMessage = [joinMessage];
+    if (joinMessage === null) joinMessage = [];
+    return {
+      id: config.id,
+      name: config.name,
+      icon: config.icon,
+      roles,
+      messages: config.msgid ? config.msgid : config.messages,
+      currentChannel: config.chan ? config.chan : config.currentChannel,
+      currentMessage: config.emoji ? config.emoji : config.currentMessage,
+      log: config.log ? config.log : null,
+      joinChannel: config.joinChannel ? config.joinChannel : null,
+      joinMessage,
+      leaveChannel: config.leaveChannel ? config.leaveChannel : null,
+      leaveMessage: config.leaveMessage ? config.leaveMessage : null,
+      bot: config.bot ? config.bot : [],
+      user: config.user ? config.user : [],
+      premium: premium.premium,
+      premiumExpires: premium.premiumExpires,
+      premiumUsers: premium.premiumUsers,
+      suggestions: config.suggestions ? config.suggestions : [],
+      suggestion: {
+        submit: config.submitChannel
+          ? config.submitChannel
+          : config.suggestion.submit,
+        dm: config.suggestionDM ? config.suggestionDM : config.suggestion.dm,
+        role: config.suggestionRole
+          ? config.suggestionRole
+          : config.suggestion.role,
+        new:
+          typeof config.suggestion === 'string'
+            ? config.suggestion
+            : config.suggestion.new,
+        approved: config.suggestion.approved ? config.suggestion.approved : null,
+        denied: config.suggestion.denied ? config.suggestion.denied : null,
+        invalid: config.suggestion.invalid ? config.suggestion.invalid : null,
+        potential: config.suggestion.potential ? config.suggestion.potential : null,
+        reaction: config.suggestion.reaction ? config.suggestion.reaction : false,
+        emojis: config.suggestion.emojis ? config.suggestion.emojis : ['👍', '👎'],
+      },
+      prefix: config.prefix ? config.prefix : null,
+      lang: config.lang ? config.lang : 'en',
+      commandRole: config.commandRole ? config.commandRole : null,
+      trello: config.trello
+        ? {
+            enabled: config.trello.enabled,
+            board: config.trello.board ? config.trello.board : null,
+            new: config.trello.list ? config.trello.list : config.trello.new,
+            approved: config.trello.approved ? config.trello.approved : null,
+            denied: config.trello.denied ? config.trello.denied : null,
+            potential: config.trello.potential ? config.trello.potential : null,
+            invalid: config.trello.invalid ? config.trello.invalid : null,
+          }
+        : {
+            enabled: false,
+            board: null,
+            new: null,
+            approved: null,
+            denied: null,
+            potential: null,
+            invalid: null,
+          },
+    };
   }
 }
 

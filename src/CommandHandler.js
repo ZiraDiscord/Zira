@@ -1,8 +1,6 @@
 'use strict';
 
-const {
-  EventEmitter,
-} = require('events');
+const { EventEmitter } = require('events');
 
 class CommandHandler extends EventEmitter {
   constructor(bot, DB) {
@@ -25,10 +23,8 @@ class CommandHandler extends EventEmitter {
     if (!msg.channel.guild) {
       return this.prefix;
     }
-    let guild = await this.db.Find('reaction', {
-      id: msg.channel.guild.id,
-    });
-    [guild] = guild;
+    const guilds = await this.db.get('reaction');
+    const guild = await guilds.findOne({ id: msg.channel.guild.id });
     if (guild) {
       if (guild.prefix) {
         return guild.prefix;
@@ -37,7 +33,7 @@ class CommandHandler extends EventEmitter {
     return this.prefix;
   }
 
-   GetParams(raw) {
+  GetParams(raw) {
     const parms = [];
     let lastSpace = -1;
     let end = false;
@@ -74,7 +70,7 @@ class CommandHandler extends EventEmitter {
     return parms;
   }
 
-   Sanitize(string) {
+  Sanitize(string) {
     let str = string;
     while (str.indexOf('../') !== -1) {
       str = str.replace('../', '');
@@ -113,6 +109,9 @@ class CommandHandler extends EventEmitter {
         command: firstWord,
         prefix: testpref,
       };
+      if (msg.channel.guild) command.channels = msg.channel.guild.channels;
+      if (msg.channel.guild) command.roles = msg.channel.guild.roles;
+      if (msg.channel.guild) command.guild = msg.channel.guild;
       this.emit('command', command);
       this.commands++;
     } else if (guild === gpr) {
@@ -136,6 +135,9 @@ class CommandHandler extends EventEmitter {
         command: firstWord,
         prefix: guild,
       };
+      if (msg.channel.guild) command.channels = msg.channel.guild.channels;
+      if (msg.channel.guild) command.roles = msg.channel.guild.roles;
+      if (msg.channel.guild) command.guild = msg.channel.guild;
       this.emit('command', command);
       this.commands++;
     } else if (mention === `<@${this.bot.user.id}>`) {
@@ -159,12 +161,14 @@ class CommandHandler extends EventEmitter {
         msg,
         params,
         command: firstWord,
-        prefix: `<@${this.bot.user.id}> `,
+        prefix: this.prefix,
       };
+      if (msg.channel.guild) command.channels = msg.channel.guild.channels;
+      if (msg.channel.guild) command.roles = msg.channel.guild.roles;
+      if (msg.channel.guild) command.guild = msg.channel.guild;
       this.emit('command', command);
       this.commands++;
-    } else
-    if (mentionNick === `<@!${this.bot.user.id}>`) {
+    } else if (mentionNick === `<@!${this.bot.user.id}>`) {
       const params = this.GetParams(msg.content);
 
       let SpaceIndex = msg.content.length;
@@ -186,11 +190,14 @@ class CommandHandler extends EventEmitter {
         msg,
         params,
         command: firstWord,
-        prefix: `<@!${this.bot.user.id}> `,
+        prefix: this.prefix,
       };
+      if (msg.channel.guild) command.channels = msg.channel.guild.channels;
+      if (msg.channel.guild) command.roles = msg.channel.guild.roles;
+      if (msg.channel.guild) command.guild = msg.channel.guild;
       this.emit('command', command);
       this.commands++;
     }
-}
+  }
 }
 module.exports = CommandHandler;

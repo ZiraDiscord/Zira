@@ -1,440 +1,382 @@
 'use strict';
 
-const numeral = require('numeral');
-
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        description: ':warning: This command can\'t be used in DM',
-        color: caller.color.yellow,
-      },
-    }).catch(console.error);
-    return;
-  }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageGuild')) {
-    switch (command.params[0]) {
-      case 'channel':
-        {
-          if (!command.params[1]) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.blue,
-                title: lang.title,
-                description: `**${command.prefix}${lang.suggestion.channel.help[0]}${command.prefix}${lang.suggestion.channel.help[1]}`,
-              },
-            }).catch(console.error);
-            return;
-          }
-          const channel = command.msg.channel.guild.channels.get(command.params[1].replace(/\D/g, ''));
-          if (command.params[1] === 'disable') {
-            guild.suggestion = '';
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleComp,
-                description: lang.suggestion.stop,
-                color: caller.color.green,
-              },
-            }).catch(console.error);
-            caller.utils.updateGuild(guild);
-            return;
-          }
-          if (!channel) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleError,
-                description: lang.unknownChannel,
-                color: caller.color.yellow,
-              },
-            }).catch(console.error);
-            return;
-          }
-          guild.suggestion = channel.id;
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleComp,
-              description: lang.suggestion.channel.set[0] + guild.suggestion + lang.suggestion.channel.set[1],
-              color: caller.color.green,
-            },
-          }).catch(console.error);
-          caller.utils.updateGuild(guild);
-          break;
-        }
-      case 'submit':
-        {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
-          if (!command.params[1]) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.blue,
-                title: lang.title,
-                description: `**${command.prefix}${lang.suggestion.submit.help[0]}${command.prefix}${lang.suggestion.submit.help[1]}`,
-              },
-            }).catch(console.error);
-            return;
-          }
-          const channel = command.msg.channel.guild.channels.get(command.params[1].replace(/\D/g, ''));
-          if (command.params[1] === 'disable') {
-            guild.submitChannel = '';
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleComp,
-                description: lang.suggestion.submit.disable,
-                color: caller.color.green,
-              },
-            }).catch(console.error);
-            caller.utils.updateGuild(guild);
-            return;
-          }
-          if (!channel) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleError,
-                description: lang.unknownChannel,
-                color: caller.color.yellow,
-              },
-            }).catch(console.error);
-            return;
-          }
-          guild.submitChannel = channel.id;
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleComp,
-              description: `${lang.suggestion.submit.set}${guild.submitChannel}>`,
-              color: caller.color.green,
-            },
-          }).catch(console.error);
-          caller.utils.updateGuild(guild);
-          break;
-        }
-      case 'move':
-        {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
-          if (!command.params[1]) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.blue,
-                title: lang.title,
-                description: `**${command.prefix}${lang.suggestion.move.help[0]}${command.prefix}${lang.suggestion.move.help[1]}`,
-              },
-            }).catch(console.error);
-            return;
-          }
-          const channel = command.msg.channel.guild.channels.get(command.params[1].replace(/\D/g, ''));
-          if (command.params[1] === 'disable') {
-            guild.moveChannel = '';
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleComp,
-                description: lang.suggestion.move.disable,
-                color: caller.color.green,
-              },
-            }).catch(console.error);
-            caller.utils.updateGuild(guild);
-            return;
-          }
-          if (!channel) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleError,
-                description: lang.unknownChannel,
-                color: caller.color.yellow,
-              },
-            }).catch(console.error);
-            return;
-          }
-          guild.moveChannel = channel.id;
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleComp,
-              description: `${lang.suggestion.move.set}${guild.moveChannel}>`,
-              color: caller.color.green,
-            },
-          }).catch(console.error);
-          caller.utils.updateGuild(guild);
-          break;
-        }
-      case 'dm':
-        {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
-          guild.suggestionDM = guild.suggestionDM !== true;
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              color: caller.color.green,
-              title: lang.titleComp,
-              description: (guild.suggestionDM) ? lang.suggestion.dm.set : lang.suggestion.dm.disable,
-            },
-          });
-          caller.utils.updateGuild(guild);
-          break;
-        }
-      case 'role':
-        {
-          if (!command.params[1]) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.blue,
-                title: lang.title,
-                description: `**${command.prefix}${lang.suggestion.role.help[0]}${command.prefix}${lang.suggestion.role.help[1]}\n\n${lang.example}${command.prefix}suggestion role Moderator`,
-              },
-            }).catch(console.error);
-            return;
-          }
-          if (command.params[1] === 'revoke') {
-            if (guild.suggestionRole) {
-              caller.utils.message(command.msg.channel.id, {
-                embed: {
-                  title: lang.titleComp,
-                  description: lang.suggestion.role.revoke[0] + guild.suggestionRole + lang.suggestion.role.revoke[1],
-                  color: caller.color.green,
-                },
-              }).catch(console.error);
-              guild.suggestionRole = '';
-              caller.utils.updateGuild(guild);
-            } else {
-              caller.utils.message(command.msg.channel.id, {
-                embed: {
-                  title: lang.titleError,
-                  description: lang.suggestion.role.noset,
-                  color: caller.color.yellow,
-                },
-              }).catch(console.error);
-            }
-          } else {
-            let role;
-            if (command.params[1].indexOf('<@&') !== -1) {
-              role = command.msg.channel.guild.roles.get(command.params[1].replace(/\D/g, ''));
-            } else {
-              const name = command.params.splice(1).join(' ').toLowerCase();
-              [role] = command.msg.channel.guild.roles.filter(r => r.name.toLowerCase().indexOf(name) !== -1);
-            }
-            if (!role) {
-              caller.utils.message(command.msg.channel.id, {
-                embed: {
-                  title: lang.titleError,
-                  description: lang.unknownRole,
-                  color: caller.color.yellow,
-                },
-              }).catch(console.error);
-              return;
-            }
-            guild.suggestionRole = role.id;
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleComp,
-                description: `${lang.suggestion.role.set}${guild.suggestionRole}>`,
-                color: caller.color.green,
-              },
-            }).catch(console.error);
-            caller.utils.updateGuild(guild);
-          }
-          break;
-        }
-      case 'trello':
-        {
-          if (!guild.premium && process.env.PREMIUM) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.premium,
-              },
-            }).catch(console.error);
-            return;
-          }
-          if (!command.params[1]) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.blue,
-                title: lang.title,
-                description: `**${command.prefix}${lang.suggestion.trello.help[0]}${command.prefix}${lang.suggestion.trello.help[1]}`,
-              },
-            }).catch(console.error);
-            return;
-          }
-          if (command.params[1] === 'disable') {
-            if (guild.trello) {
-              guild.trello.enabled = false;
-              caller.utils.message(command.msg.channel.id, {
-                embed: {
-                  color: caller.color.green,
-                  title: lang.titleComp,
-                  description: lang.suggestion.trello.disable,
-                },
-              }).catch(console.error);
-              caller.utils.updateGuild(guild);
-            } else {
-              caller.utils.message(command.msg.channel.id, {
-                embed: {
-                  color: caller.color.yellow,
-                  title: lang.titleError,
-                  description: lang.suggestion.trello.noset,
-                },
-              }).catch(console.error);
-            }
-            return;
-          }
-          const Boards = await caller.trello.getBoards(process.env.TRELLO_ID);
-          if (Boards.map(b => b.shortLink).indexOf(command.params[1]) === -1) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.suggestion.trello.unknown,
-              },
-            }).catch(console.error);
-            return;
-          }
-          const Lists = await caller.trello.getListsOnBoard(command.params[1]);
-          if (!Lists.length) {
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.suggestion.trello.noLists,
-              },
-            }).catch(console.error);
-            return;
-          }
-          const authID = Math.random().toString(36).substr(2, 5);
-          const DM = await caller.bot.users.get(command.msg.author.id).getDMChannel();
-          caller.utils.message(DM.id, authID).catch(console.error);
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              color: caller.color.blue,
-              title: lang.suggestion.trello.title,
-              description: lang.suggestion.trello.verify,
-            },
-          }).catch(console.error);
-          let verified = false;
-          const lists = await caller.trello.getListsOnBoard(command.params[1]);
-          let timer;
-          const handler = async (message) => {
-            if (message.author.id !== command.msg.author.id && message.channel.id !== command.msg.id) return;
-            console.log(message.content);
-            if (message.content === 'done' && !verified) {
-              const cards = await caller.trello.getCardsOnBoard(command.params[1]);
-              const [card] = cards.filter(c => c.name === authID);
-              if (!card) {
-                caller.utils.message(command.msg.channel.id, {
-                  embed: {
-                    color: caller.color.yellow,
-                    title: lang.titleError,
-                    description: lang.suggestion.trello.noCard.replace('$title', authID),
-                  },
-                }).catch(console.error);
-                caller.bot.off('messageCreate', handler);
-                clearTimeout(timer);
-                return;
-              }
-              let description = lang.suggestion.trello.list[0];
-              lists.forEach((list, index) => {
-                description += `**${index}** ~~-~~ ${list.name}\n`;
-              });
-              description += lang.suggestion.trello.list[1];
-              caller.utils.message(command.msg.channel.id, {
-                embed: {
-                  color: caller.color.blue,
-                  description,
-                },
-              }).catch(console.error);
-              verified = true;
-              clearTimeout(timer);
-              timer = setTimeout(() => {
-                caller.bot.off('messageCreate', handler);
-                caller.utils.message(command.msg.channel.id, {
-                  embed: {
-                    color: caller.color.yellow,
-                    title: lang.titleError,
-                    description: lang.suggestion.trello.timeout,
-                  },
-                }).catch(console.error);
-              }, 120000);
-            } else if (lists[numeral(message.content).value()]) {
-              const list = lists[numeral(message.content).value()];
-              guild.trello = {
-                board: command.params[1],
-                list: list.id,
-                name: list.name,
-                enabled: true,
-              };
-              caller.utils.updateGuild(guild);
-              caller.utils.message(command.msg.channel.id, {
-                embed: {
-                  color: caller.color.green,
-                  title: lang.titleComp,
-                  description: lang.suggestion.trello.set,
-                },
-              }).catch(console.error);
-              caller.bot.off('messageCreate', handler);
-              clearTimeout(timer);
-            }
-          };
-          caller.bot.on('messageCreate', handler);
-          timer = setTimeout(() => {
-            caller.bot.off('messageCreate', handler);
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                color: caller.color.yellow,
-                title: lang.titleError,
-                description: lang.suggestion.trello.timeout,
-              },
-            }).catch(console.error);
-          }, 120000);
-          break;
-        }
-      default:
-        caller.utils.message(command.msg.channel.id, {
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  switch (command.params[0]) {
+    case 'channel': {
+      const types = ['new', 'approved', 'denied', 'invalid', 'potential'];
+      if (
+        !command.params[1] ||
+        types.indexOf(command.params[1].toLowerCase()) === -1 ||
+        !command.params[2]
+      ) {
+        caller.utils.createMessage(command.msg.channel.id, {
           embed: {
+            title: lang.titles.use,
             color: caller.color.blue,
-            title: lang.title,
-            description: `**${command.prefix}${lang.suggestion.help[0]}${command.prefix}${lang.suggestion.help[1]}${command.prefix}${lang.suggestion.help[2]}${command.prefix}${lang.suggestion.help[3]}${command.prefix}${lang.suggestion.help[4]}${command.prefix}${lang.suggestion.help[5]}`,
+            fields: [
+              {
+                name:
+                  command.prefix +
+                  command.command +
+                  lang.commands.suggestion.channel.help,
+                value: lang.commands.suggestion.channel.description,
+              },
+              {
+                name: lang.example,
+                value: `${command.prefix + command.command} channel new ${
+                  caller.utils.getRandomElement(
+                    command.channels.filter((c) => !c.type),
+                  ).mention
+                }\n${command.prefix + command.command} channel approved ${
+                  caller.utils.getRandomElement(
+                    command.channels.filter((c) => !c.type),
+                  ).mention
+                }\n\n[${lang.guidePage}](https://zira.pw/guide/${
+                  command.command
+                })`,
+              },
+            ],
           },
-        }).catch(console.error);
+        });
+        return;
+      }
+      const channel = command.guild.channels.get(
+        command.params[2].replace(/\D+/g, ''),
+      );
+      if (!channel) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            color: caller.color.yellow,
+            description: lang.errors.unknownChannel,
+          },
+        });
+        return;
+      }
+      const type = types[types.indexOf(command.params[1].toLowerCase())];
+      guild.suggestion[type] = channel.id;
+      caller.utils.updateGuild(guild);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.complete,
+          color: caller.color.green,
+          description: lang.commands.suggestion.channel.set
+            .replace('$type', type.charAt(0).toUpperCase() + type.slice(1))
+            .replace('$channel', channel.mention),
+        },
+      });
+      break;
     }
-  } else {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        title: lang.titleError,
-        description: lang.perm.noGuildPerm,
-        color: caller.color.yellow,
-      },
-    });
+    case 'submit': {
+      if (process.env.PREMIUM && !guild.premium) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            description: lang.errors.premium,
+            color: caller.color.yellow,
+          },
+        });
+        return;
+      }
+      if (!command.params[1]) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.use,
+            color: caller.color.blue,
+            fields: [
+              {
+                name:
+                  command.prefix +
+                  command.command +
+                  lang.commands.suggestion.submit.help,
+                value: lang.commands.suggestion.submit.description,
+              },
+              {
+                name: lang.example,
+                value: `${command.prefix + command.command} submit new ${
+                  caller.utils.getRandomElement(
+                    command.channels.filter((c) => !c.type),
+                  ).mention
+                }\n${command.prefix + command.command} submit approved ${
+                  caller.utils.getRandomElement(
+                    command.channels.filter((c) => !c.type),
+                  ).mention
+                }\n\n[${lang.guidePage}](https://zira.pw/guide/${
+                  command.command
+                })`,
+              },
+            ],
+          },
+        });
+        return;
+      }
+      if (command.params[1] === 'disable') {
+        guild.suggestion.submit = null;
+        caller.utils.updateGuild(guild);
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.complete,
+            color: caller.color.green,
+            description: lang.commands.suggestion.submit.disable,
+          },
+        });
+        return;
+      }
+      const channel = command.guild.channels.get(
+        command.params[1].replace(/\D+/g, ''),
+      );
+      if (!channel) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            color: caller.color.yellow,
+            description: lang.errors.unknownChannel,
+          },
+        });
+        return;
+      }
+      guild.suggestion.submit = channel.id;
+      caller.utils.updateGuild(guild);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.complete,
+          color: caller.color.green,
+          description: lang.commands.suggestion.submit.set.replace(
+            '$channel',
+            channel.mention,
+          ),
+        },
+      });
+      break;
+    }
+    case 'dm': {
+      if (process.env.PREMIUM && !guild.premium) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            description: lang.errors.premium,
+            color: caller.color.yellow,
+          },
+        });
+        return;
+      }
+      guild.suggestion.dm = guild.suggestion.dm !== true;
+      caller.utils.updateGuild(guild);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.complete,
+          color: caller.color.green,
+          description:
+            lang.commands.suggestion.dm[guild.suggestion.dm ? 'on' : 'off'],
+        },
+      });
+      break;
+    }
+    case 'reaction': {
+      if (process.env.PREMIUM && !guild.premium) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            description: lang.errors.premium,
+            color: caller.color.yellow,
+          },
+        });
+        return;
+      }
+      guild.suggestion.reaction = guild.suggestion.reaction !== true;
+      caller.utils.updateGuild(guild);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.complete,
+          color: caller.color.green,
+          description:
+            lang.commands.suggestion.reaction[
+              guild.suggestion.reaction ? 'on' : 'off'
+            ],
+        },
+      });
+      break;
+    }
+    case 'emojis': {
+      if (process.env.PREMIUM && !guild.premium) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            description: lang.errors.premium,
+            color: caller.color.yellow,
+          },
+        });
+        return;
+      }
+      if (!command.params[1] || !command.params[2]) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.use,
+            color: caller.color.blue,
+            fields: [
+              {
+                name:
+                  command.prefix +
+                  command.command +
+                  lang.commands.suggestion.emojis.help,
+                value: lang.commands.suggestion.emojis.description,
+              },
+              {
+                name: lang.example,
+                value: `${command.prefix +
+                  command.command} emojis :thumbsup: :thumbsdown:\n\n[${
+                  lang.guidePage
+                }](https://zira.pw/guide/${command.command})`,
+              },
+            ],
+          },
+        });
+        return;
+      }
+      guild.suggestion.emojis = [command.params[1], command.params[2]];
+      caller.utils.updateGuild(guild);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.complete,
+          color: caller.color.green,
+          description: lang.commands.suggestion.emojis.set
+            .replace('$emoji1', command.params[1])
+            .replace('$emoji2', command.params[2]),
+        },
+      });
+      break;
+    }
+    case 'role': {
+      if (!command.params[1]) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.use,
+            color: caller.color.blue,
+            fields: [
+              {
+                name:
+                  command.prefix +
+                  command.command +
+                  lang.commands.suggestion.submit.help,
+                value: lang.commands.suggestion.submit.description,
+              },
+              {
+                name: lang.example,
+                value: `${command.prefix + command.command} submit new ${
+                  caller.utils.getRandomElement(
+                    command.channels.filter((c) => !c.type),
+                  ).mention
+                }\n${command.prefix + command.command} submit approved ${
+                  caller.utils.getRandomElement(
+                    command.channels.filter((c) => !c.type),
+                  ).mention
+                }\n\n[${lang.guidePage}](https://zira.pw/guide/${
+                  command.command
+                })`,
+              },
+            ],
+          },
+        });
+        return;
+      }
+      if (command.params[1] === 'disable') {
+        guild.suggestion.role = null;
+        caller.utils.updateGuild(guild);
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.complete,
+            color: caller.color.green,
+            description: lang.commands.suggestion.role.disable,
+          },
+        });
+        return;
+      }
+      const [role] = command.guild.roles.filter(
+        (r) => r.id === command.params[1] || r.name.toLowerCase().indexOf(command.params[1].toLowerCase()) !== -1,
+      );
+      if (!role) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.unknwonRole,
+          },
+        });
+        break;
+      }
+      guild.suggestion.role = role.id;
+      caller.utils.updateGuild(guild);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.complete,
+          color: caller.color.green,
+          description: lang.commands.suggestion.role.set.replace(
+            '$role',
+            role.mention,
+          ),
+        },
+      });
+      break;
+    }
+    default:
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          color: caller.color.blue,
+          title: lang.titles.use,
+          fields: [
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.suggestion.main[0].name,
+              value: lang.commands.suggestion.main[0].value,
+            },
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.suggestion.main[1].name,
+              value: lang.commands.suggestion.main[1].value,
+            },
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.suggestion.main[2].name,
+              value: lang.commands.suggestion.main[2].value,
+            },
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.suggestion.main[3].name,
+              value: lang.commands.suggestion.main[3].value,
+            },
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.suggestion.main[4].name,
+              value: lang.commands.suggestion.main[4].value,
+            },
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.suggestion.main[5].name,
+              value: lang.commands.suggestion.main[5].value,
+            },
+          ],
+        },
+      });
   }
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'suggestion',
-  };
+exports.Settings = {
+  command: 'suggestion',
+  category: 1,
+  show: true,
+  permissions: ['manageGuild'],
+  dm: false,
 };

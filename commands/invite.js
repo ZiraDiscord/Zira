@@ -1,12 +1,14 @@
 'use strict';
 
-exports.Run = async function Run(caller, command) {
-  caller.utils.message(command.msg.channel.id, '<https://zira.pw/invite>');
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  caller.utils.createMessage(command.msg.channel.id, 'https://zira.pw/invite');
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'misc',
-  };
+exports.Settings = {
+  command: 'invite',
+  category: 3,
+  show: true,
+  permissions: [],
+  dm: true,
 };

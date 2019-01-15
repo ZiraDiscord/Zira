@@ -1,138 +1,163 @@
 'use strict';
 
-const snekfetch = require('snekfetch'); // eslint-disable-line
-
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  if (guild.suggestion.role && command.msg.member.roles.indexOf(guild.suggestion.role) === -1) {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        description: ':warning: This command can\'t be used in DM',
+        title: lang.titles.error,
         color: caller.color.yellow,
+        description: lang.errors.suggestionRole.replace('$role', guild.suggestion.role),
       },
     });
     return;
   }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageGuild') || command.msg.member.roles.indexOf(guild.suggestionRole) !== -1) {
-    if (!command.params[0]) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          color: caller.color.blue,
-          title: lang.title,
-          description: `**${command.prefix}${lang.approve.help}\n\n${lang.example}${command.prefix}approve ${command.msg.id} Great idea.\n${command.prefix}approve ${Math.random().toString(36).substr(2, 5)} This will be added soon.`,
-        },
-      });
-      return;
-    }
-    if (!guild.suggestion) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          color: caller.color.yellow,
-          title: lang.titleError,
-          description: lang.suggestion.disable,
-        },
-      });
-      return;
-    }
-    const id = (guild.suggestions.filter(s => s.id === command.params[0]).length) ? guild.suggestions.filter(s => s.id === command.params[0])[0].message : command.params[0];
-    let message;
-    try {
-      message = await caller.bot.getMessage(guild.suggestion, id);
-    } catch (e) {
-      caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
-      if (e.code === 50013) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.approve.read[0] + guild.suggestion + lang.approve.read[1],
-            color: caller.color.yellow,
-          },
-        });
-        guild.suggestion = '';
-        caller.utils.updateGuild(guild);
-      } else if (e.code === 10008) {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.unknownMessage,
-            color: caller.color.yellow,
-          },
-        });
-      } else {
-        caller.utils.message(command.msg.channel.id, {
-          embed: {
-            title: lang.titleError,
-            description: lang.approve.unknown,
-            color: caller.color.yellow,
-          },
-        });
-      }
-      return;
-    }
-    if (!message.embeds[0] || message.author.id !== caller.bot.user.id) {
-      caller.utils.message(command.msg.channel.id, {
-        embed: {
-          title: lang.titleError,
-          description: lang.suggestion.notSetup,
-          color: caller.color.yellow,
-        },
-      });
-      return;
-    }
-    const embed = message.embeds[0];
-    const reason = (command.params[1]) ? command.params.splice(1).join(' ') : lang.suggestion.noReason;
-    if (embed.description) {
-      embed.title = lang.approve.title;
-      embed.color = caller.color.green;
-      embed.fields = [{
-        name: lang.suggestion.reason + command.msg.author.username,
-        value: reason,
-      }];
-    } else {
-      embed.color = caller.color.green;
-      embed.fields = [{
-        name: lang.approve.title,
-        value: embed.fields[0].value,
-      }, {
-        name: lang.suggestion.reason + command.msg.author.username,
-        value: reason,
-      }];
-    }
-    if (guild.moveChannel) {
-      try {
-        caller.utils.message(guild.moveChannel, {
-          embed,
-        });
-      } catch (e) {
-        caller.Logger.Warning(command.msg.author.username, ` ${command.msg.author.id} ${command.msg.channel.id} `, e.message.replace(/\n\s/g, ''));
-        guild.moveChannel = '';
-        caller.utils.updateGuild(guild);
-      }
-    }
-    caller.bot.editMessage(guild.suggestion, message.id, {
-      embed,
-    }).catch(console.error);
-    if (command.msg.channel.guild.members.get(caller.bot.user.id).permission.has('manageMessages')) caller.bot.deleteMessage(command.msg.channel.id, command.msg.id).catch(console.error);
-    const [suggestion] = guild.suggestions.filter(s => s.message === id);
-    if (suggestion && guild.suggestionDM) {
-      const channel = await caller.bot.getDMChannel(suggestion.user);
-      caller.utils.message(channel.id, lang.approve.dm.replace('$USER', command.msg.author.username).replace('$SUGGESTION', suggestion.suggestion).replace('$REASON', reason));
-    }
-  } else {
-    caller.utils.message(command.msg.channel.id, {
+  if (!command.params[0]) {
+    caller.utils.createMessage(command.msg.channel.id, {
       embed: {
-        title: lang.titleError,
-        description: lang.perm.noGuildPerm,
+        title: lang.titles.error,
         color: caller.color.yellow,
+        description: lang.errors.suggestionID,
       },
     });
+    return;
   }
+  const [suggestion] = guild.suggestions.filter(
+    (s) => s.message === command.params[0] || s.id === command.params[0],
+  );
+  let index;
+  guild.suggestions.forEach((s, i) => {
+    if (s.message === command.params[0] || s.id === command.params[0]) {
+      index = i;
+    }
+  });
+  if (!suggestion) {
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        title: lang.titles.error,
+        color: caller.color.yellow,
+        description: lang.errors.unknownSuggestion,
+      },
+    });
+    return;
+  }
+  let oldSuggestion;
+  try {
+    oldSuggestion = await caller.bot.getMessage(
+      suggestion.channel,
+      suggestion.message,
+    );
+  } catch (e) {
+    caller.logger.warn(
+      `[Approve] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+        /\n\s/g,
+        '',
+      )}`,
+    );
+    caller.utils.createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.yellow,
+        title: lang.titles.error,
+        description: lang.errors.suggestionRead
+          .replace('$suggestion', command.params[0])
+          .replace('$channel', suggestion.channel),
+      },
+    });
+    return;
+  }
+  const embed = oldSuggestion.embeds[0];
+  embed.color = caller.color.green;
+  embed.fields[0].name = lang.suggestion.approved;
+  if (command.params[1]) {
+    embed.fields[1] = {
+      name: lang.suggestion.reason,
+      value: command.params.slice(1).join(' '),
+    };
+  }
+
+  const channel = guild.suggestion.approved
+    ? command.channels.get(guild.suggestion.approved)
+    : null;
+
+  if (guild.suggestion.approved === suggestion.channel && channel) {
+    try {
+      await oldSuggestion.edit({ embed });
+    } catch (e) {
+      caller.logger.warn(e);
+      return;
+    }
+  } else if (channel) {
+    let newSuggestion;
+    try {
+      newSuggestion = await caller.bot.createMessage(channel.id, { embed });
+    } catch (e) {
+      caller.logger.warn(
+        `[Approve] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+          /\n\s/g,
+          '',
+        )}`,
+      );
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          color: caller.color.yellow,
+          title: lang.titles.error,
+          description: lang.error.suggestionSend.replace('$channel', channel.mention),
+        },
+      });
+      return;
+    }
+    await oldSuggestion.delete().catch(caller.logger.warn);
+    suggestion.channel = channel.id;
+    suggestion.message = newSuggestion.id;
+  } else await oldSuggestion.edit({ embed }).catch(caller.logger.warn);
+
+  suggestion.state = 'approved';
+  suggestion.reason = command.params[1]
+    ? command.params.slice(1).join(' ')
+    : null;
+
+  guild.suggestions[index] = suggestion;
+  await caller.utils.updateGuild(guild);
+  const user = caller.bot.users.get(suggestion.author.id);
+  if (user && guild.suggestion.dm) {
+    const dm = await user.getDMChannel();
+    dm.createMessage(command.params[1] ? lang.suggestion.approvedMessageReason.replace('$suggestion', suggestion.content).replace('$reason', command.params.slice(1).join(' ')) : lang.suggestion.approvedMessage.replace('$suggestion',
+    suggestion.content)).catch(caller.logger.warn);
+  }
+  if (suggestion.trello && guild.trello.enabled && guild.trello.approved) {
+    await caller.trello.updateCardName(
+      suggestion.trello,
+      `${lang.suggestion.approved}: ${suggestion.content.substring(0, 31)}`,
+    );
+    await caller.trello.updateCardDescription(
+      suggestion.trello,
+      `${suggestion.content}\n\n${lang.suggestion.submittedBy} ${suggestion.author.username}#${
+        suggestion.author.discriminator
+      }\n\n${lang.suggestion.reason}: ${suggestion.reason ? suggestion.reason : lang.suggestion.noReason}`,
+    );
+    await caller.trello.updateCardList(
+      suggestion.trello,
+      guild.trello.approved.id,
+    );
+  }
+  caller.bot
+    .createMessage(command.msg.channel.id, {
+      embed: {
+        color: caller.color.green,
+        title: lang.titles.complete,
+        description: lang.commands.approve.success,
+      },
+    })
+    .then((message) => {
+      setTimeout(() => message.delete(), 5000);
+    })
+    .catch(caller.logger.warn);
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'suggestion',
-  };
+exports.Settings = {
+  command: 'approve',
+  category: 1,
+  show: true,
+  permissions: ['manageGuild'],
+  dm: false,
 };

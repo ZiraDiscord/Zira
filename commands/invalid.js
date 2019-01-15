@@ -49,7 +49,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     );
   } catch (e) {
     caller.logger.warn(
-      `[Approve] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+      `[Invalid] ${command.msg.channel.id} ${e.code} ${e.message.replace(
         /\n\s/g,
         '',
       )}`,
@@ -66,8 +66,8 @@ exports.Run = async function Run(caller, command, guild, lang) {
     return;
   }
   const embed = oldSuggestion.embeds[0];
-  embed.color = caller.color.red;
-  embed.fields[0].name = lang.suggestion.denied;
+  embed.color = 0;
+  embed.fields[0].name = lang.suggestion.invalid;
   if (command.params[1]) {
     embed.fields[1] = {
       name: lang.suggestion.reason,
@@ -75,11 +75,11 @@ exports.Run = async function Run(caller, command, guild, lang) {
     };
   }
 
-  const channel = guild.suggestion.denied
-    ? command.channels.get(guild.suggestion.denied)
+  const channel = guild.suggestion.invalid
+    ? command.channels.get(guild.suggestion.invalid)
     : null;
 
-  if (guild.suggestion.denied === suggestion.channel && channel) {
+  if (guild.suggestion.invalid === suggestion.channel && channel) {
     try {
       await oldSuggestion.edit({ embed });
     } catch (e) {
@@ -92,7 +92,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       newSuggestion = await caller.bot.createMessage(channel.id, { embed });
     } catch (e) {
       caller.logger.warn(
-        `[Deny] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+        `[Approve] ${command.msg.channel.id} ${e.code} ${e.message.replace(
           /\n\s/g,
           '',
         )}`,
@@ -111,7 +111,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     suggestion.message = newSuggestion.id;
   } else await oldSuggestion.edit({ embed }).catch(caller.logger.warn);
 
-  suggestion.state = 'denied';
+  suggestion.state = 'potential';
   suggestion.reason = command.params[1]
     ? command.params.slice(1).join(' ')
     : null;
@@ -121,13 +121,13 @@ exports.Run = async function Run(caller, command, guild, lang) {
   const user = caller.bot.users.get(suggestion.author.id);
   if (user && guild.suggestion.dm) {
     const dm = await user.getDMChannel();
-    dm.createMessage(command.params[1] ? lang.suggestion.deniedMessageReason.replace('$suggestion', suggestion.content).replace('$reason', command.params.slice(1).join(' ')) : lang.suggestion.deniedMessage.replace('$suggestion',
+    dm.createMessage(command.params[1] ? lang.suggestion.invalidMessageReason.replace('$suggestion', suggestion.content).replace('$reason', command.params.slice(1).join(' ')) : lang.suggestion.invalidMessage.replace('$suggestion',
     suggestion.content)).catch(caller.logger.warn);
   }
-  if (suggestion.trello && guild.trello.enabled && guild.trello.denied) {
+  if (suggestion.trello && guild.trello.enabled && guild.trello.invalid) {
     await caller.trello.updateCardName(
       suggestion.trello,
-      `${lang.suggestion.denied}: ${suggestion.content.substring(0, 31)}`,
+      `${lang.suggestion.invalid}: ${suggestion.content.substring(0, 31)}`,
     );
     await caller.trello.updateCardDescription(
       suggestion.trello,
@@ -137,7 +137,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     );
     await caller.trello.updateCardList(
       suggestion.trello,
-      guild.trello.denied.id,
+      guild.trello.invalid.id,
     );
   }
   caller.bot
@@ -145,7 +145,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       embed: {
         color: caller.color.green,
         title: lang.titles.complete,
-        description: lang.commands.deny.success,
+        description: lang.commands.invalid.success,
       },
     })
     .then((message) => {
@@ -155,7 +155,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
 };
 
 exports.Settings = {
-  command: 'deny',
+  command: 'invalid',
   category: 1,
   show: true,
   permissions: ['manageGuild'],

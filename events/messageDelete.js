@@ -22,7 +22,7 @@ exports.Run = async function Run(caller, data) {
   }
   let roleArray = [];
   await guild.roles.forEach((item, index) => {
-    if (item.msg === data.id) {
+    if (item.message === data.id) {
       roleArray.push(index);
     } else if (data.ids && data.ids.indexOf(item.msg) !== -1) {
       roleArray.push(index);

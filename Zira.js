@@ -2,8 +2,8 @@
 
 const Eris = require('eris');
 const fs = require('fs');
-const Logger = require('disnode-logger');
 const Trello = require('trello');
+const logger = require('./src/logger');
 const CommandHandler = require('./src/CommandHandler.js');
 const DB = require('./src/DB.js');
 const Utils = require('./src/Utils.js');
@@ -28,24 +28,32 @@ class Zira {
       compress: true,
       messageLimit: 1,
     });
-    DB.Connect();
-    this.handler = new CommandHandler(this.bot, DB);
+
     this.id = cluster;
-    this.db = DB;
     this.ipc = new IPC();
-    this.Logger = Logger;
     this.color = {
       blue: 3447003,
       green: 1433628,
       yellow: 16772880,
       red: 16729871,
     };
+    this.db = DB;
+    this.handler = new CommandHandler(this.bot, DB);
     this.utils = new Utils(this);
     this.userRateLimits = {};
-    if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN && process.env.TRELLO_ID) this.trello = new Trello(process.env.TRELLO_KEY, process.env.TRELLO_TOKEN);
-
+    if (
+      process.env.TRELLO_KEY &&
+      process.env.TRELLO_TOKEN &&
+      process.env.TRELLO_ID
+    ) {
+      this.trello = new Trello(
+        process.env.TRELLO_KEY,
+        process.env.TRELLO_TOKEN,
+      );
+    }
+    this.logger = logger;
     this.bot.on('ready', () => {
-      this.Logger.Success(this.bot.user.username, 'Cluster Ready', `Cluster ${this.id}`);
+      this.logger.info(`[Cluster] ${this.id} ready!`);
       this.bot.editStatus({
         name: `${process.env.PREFIX}help | zira.pw`,
         type: 0,
@@ -55,36 +63,85 @@ class Zira {
     });
 
     this.bot.on('shardReady', (shard) => {
-      this.Logger.Success(this.bot.user.username, 'Shard Ready', `Cluster ${this.id} Shard ${shard}`);
+      this.logger.info(`[Shard] Cluster: ${this.id} ID: ${shard} ready!`);
     });
 
     this.handler.on('command', async (command) => {
+      const channel =
+        command.msg.channel.type === 0
+          ? `#${command.msg.channel.name} ${command.msg.channel.id}`
+          : 'DM';
       if (fs.existsSync(`./commands/${command.command}.js`)) {
         try {
-          let guild;
-          if (command.msg.channel.guild) {
-            guild = await this.utils.getGuild(command.msg.channel.guild.id);
-            guild.name = command.msg.channel.guild.name;
-            guild.icon = (command.msg.channel.guild.iconURL) ? command.msg.channel.guild.iconURL.replace('.jpg', '.png') : '';
+          let guild = null;
+          if (command.guild) {
+            guild = await this.utils.getGuild(command.guild.id);
+            guild.name = command.guild.name;
+            guild.icon = command.guild.iconURL
+              ? command.guild.iconURL.replace('.jpg', '.png')
+              : '';
           }
-          this.Logger.Info(command.msg.author.username, (command.msg.channel.guild) ? ` ${command.msg.author.id} ${command.msg.channel.id} ${command.msg.channel.guild.id} ` : ` ${command.msg.author.id} ${command.msg.channel.id} DM`, `Comamnd: ${command.command} ${command.params.join(' ')}`);
+
+          const lang = this.utils.getLang(guild ? guild.lang : { lang: 'en' });
+
+          this.logger.info(
+            `${channel} ${command.msg.author.username} (${
+              command.msg.author.id
+            }): ${command.command} ${command.params.join(' ')}`,
+          );
+
           const Command = require(`./commands/${command.command}.js`); // eslint-disable-line
-          Command.Run(this, command, guild);
+
+          if (command.msg.channel.type === 1 && !Command.Settings.dm) {
+            this.utils.createMessage(command.msg.channel.id, {
+              embed: {
+                description: ":warning: This command can't be used in DM",
+                color: this.color.yellow,
+              },
+            });
+            return;
+          }
+          const permissions = JSON.parse(process.env.ADMINS).indexOf(command.msg.author.id) === -1 ? this.utils.checkPermissions(
+            command.msg.member ? command.msg.member.permission.json : {},
+            Command.Settings.permissions,
+          ) : { hasPermission: true, missing: [] };
+          if (permissions.hasPermission === false && command.msg.member.roles.indexOf(guild.commandRole) === -1) {
+            this.logger.warn(`${command.msg.author.username} is missing ${permissions.missing.join(', ')} to use ${command.command}`);
+            this.utils.createMessage(command.msg.channel.id, {
+              embed: {
+                color: this.color.yellow,
+                title: lang.titleError,
+                description: `${
+                  lang.userPermissions
+                } **${permissions.missing.join(', ')}**`,
+              },
+            });
+            return;
+          }
+
+          Command.Run(this, command, guild, lang);
         } catch (err) {
           console.error(err);
         } finally {
-          delete require.cache[require.resolve(`./commands/${command.command}.js`)];
+          delete require.cache[
+            require.resolve(`./commands/${command.command}.js`)
+          ];
         }
-      } else this.Logger.Info(command.msg.author.username, (command.msg.channel.guild) ? ` ${command.msg.author.id} ${command.msg.channel.id} ${command.msg.channel.guild.id} ` : ` ${command.msg.author.id} ${command.msg.channel.id} DM`, `Unknown Comamnd: ${command.command}`);
+      } else {
+        this.logger.info(
+          `${channel} ${command.msg.author.username} (${
+            command.msg.author.id
+          }): Unknown command ${command.command}`,
+        );
+      }
     });
 
     this.bot.on('shardDisconnect', (message, shard) => {
-      this.Logger.Warning('Disconnect', `Shard ${shard}`, `${message}`);
+      this.logger.warn(`[Shard] ${shard} disconnected ${message}`);
     });
 
     this.bot.on('messageReactionAdd', async (message, emoji, user) => {
-      if (!message.channel.guild) return;
-      if (user === this.bot.user.id) return;
+      if (!message.channel.guild || user === this.bot.user.id) return;
       try {
         const Handler = require('./events/reactionAdd.js'); // eslint-disable-line
         Handler.Run(this, message, emoji, user);
@@ -164,7 +221,9 @@ class Zira {
     });
 
     this.bot.on('rawWS', async (packet) => {
-      if (packet.t !== 'MESSAGE_DELETE' && packet.t !== 'MESSAGE_DELETE_BULK') return;
+      if (packet.t !== 'MESSAGE_DELETE' && packet.t !== 'MESSAGE_DELETE_BULK') {
+        return;
+      }
       try {
         const Handler = require('./events/messageDelete.js'); // eslint-disable-line
         Handler.Run(this, packet.d);
@@ -183,34 +242,32 @@ class Zira {
             data: data.data,
           });
           break;
-        case 'guild':
-          {
-            const guild = this.bot.guilds.get(data.value);
-            if (!guild) return;
-            const guildObj = guild;
-            guildObj.channels = this.utils.mapObj(guild.channels);
-            guildObj.roles = this.utils.mapObj(guild.roles);
-            guildObj.members = this.utils.mapObj(guild.members);
-            process.send({
-              name: 'return',
-              id: guildObj.id,
-              data: guildObj,
-              cluster: this.id,
-            });
-            break;
-          }
-        case 'user':
-          {
-            const user = this.bot.users.get(data.value);
-            if (!user) return;
-            process.send({
-              name: 'return',
-              id: user.id,
-              data: user,
-              cluster: this.id,
-            });
-            break;
-          }
+        case 'guild': {
+          const guild = this.bot.guilds.get(data.value);
+          if (!guild) return;
+          const guildObj = guild;
+          guildObj.channels = this.utils.mapObj(guild.channels);
+          guildObj.roles = this.utils.mapObj(guild.roles);
+          guildObj.members = this.utils.mapObj(guild.members);
+          process.send({
+            name: 'return',
+            id: guildObj.id,
+            data: guildObj,
+            cluster: this.id,
+          });
+          break;
+        }
+        case 'user': {
+          const user = this.bot.users.get(data.value);
+          if (!user) return;
+          process.send({
+            name: 'return',
+            id: user.id,
+            data: user,
+            cluster: this.id,
+          });
+          break;
+        }
         default:
       }
     });

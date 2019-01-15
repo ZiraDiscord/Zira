@@ -3,7 +3,7 @@
 exports.Run = async function Run(caller, guild) {
   if (!process.env.WEBHOOK_ID || !process.env.WEBHOOK_TOKEN) return;
   const owner = caller.bot.users.get(guild.ownerID);
-  caller.Logger.Info('Guild Join', guild.id, `${guild.name} ${guild.memberCount}  |  ${owner.username}#${owner.discriminator} (${guild.ownerID})`);
+  caller.logger.info(`[guildCreate] ${guild.id} ${guild.name} ${guild.memberCount}`);
   const bots = guild.members.filter(m => m.user.bot).length;
   caller.bot.executeWebhook(process.env.WEBHOOK_ID, process.env.WEBHOOK_TOKEN, {
     embeds: [{
@@ -16,11 +16,4 @@ exports.Run = async function Run(caller, guild) {
       timestamp: new Date(),
     }],
   }).catch(console.error);
-  const [guilds] = await caller.db.Find('shards', {
-    id: 0,
-  });
-  guilds[`guilds_${caller.id}`] = caller.bot.guilds.map(g => g.id);
-  caller.db.Update('shards', {
-    id: 0,
-  }, guilds);
 };

@@ -1,112 +1,145 @@
 'use strict';
 
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        description: ':warning: This command can\'t be used in DM',
-        color: caller.color.yellow,
-      },
-    }).catch(console.error);
-    return;
-  }
-  const guild = GUILD;
-  const lang = caller.utils.getLang(guild);
-  if (command.msg.author.id === process.env.OWNER || command.msg.member.permission.has('manageRoles')) {
-    switch (command.params[0]) {
-    case 'channel':
-      {
-        if (!command.params[1]) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.title,
-              description: `**${command.prefix}${lang.join.channel[0]}${command.prefix}${lang.join.channel[1]}`,
-              color: caller.color.blue,
-            },
-          });
-          return;
-        }
-        const channel = (command.params[1] === 'stop') ? 'stop' : command.msg.channel.guild.channels.get(command.params[1].replace(/\D/g, ''));
-        if (channel) {
-          if (channel === 'stop') {
-            guild.joinChannel = '';
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleComp,
-                description: lang.join.stop,
-                color: caller.color.green,
-              },
-            });
-            caller.utils.updateGuild(guild);
-          } else {
-            guild.joinChannel = channel.id;
-            caller.utils.message(command.msg.channel.id, {
-              embed: {
-                title: lang.titleComp,
-                description: lang.join.setChannel[0] + guild.joinChannel + lang.join.setChannel[1],
-                color: caller.color.green,
-              },
-            });
-            caller.utils.updateGuild(guild);
-          }
-        } else {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.titleError,
-              description: lang.unknownChannel,
-              color: caller.color.yellow,
-            },
-          });
-        }
-        break;
-      }
-    case 'message':
-      {
-        if (!command.params[1]) {
-          caller.utils.message(command.msg.channel.id, {
-            embed: {
-              title: lang.title,
-              description: `**${command.prefix}${lang.join.message}\n\n${lang.example}${command.prefix}join message $mention, welcome to $guild!`,
-              color: caller.color.blue,
-            },
-          });
-          return;
-        }
-        const message = command.params.splice(1).join(' ');
-        guild.joinMessage = message;
-        caller.utils.message(command.msg.channel.id, {
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  switch (command.params[0]) {
+    case 'channel': {
+      if (command.params[1] === 'disable') {
+        guild.log = null;
+        caller.utils.updateGuild(guild);
+        caller.utils.createMessage(command.msg.channel.id, {
           embed: {
-            title: lang.titleComp,
-            description: lang.join.setMessage + guild.joinMessage,
+            color: caller.color.green,
+            title: lang.titles.complete,
+            description: lang.commands.join.channelDisable,
+          },
+        });
+        return;
+      }
+      const channel = command.channels.get(
+        caller.utils.parseID(command.params[1]),
+      );
+      if (!channel) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.unknownChannel,
+          },
+        });
+        return;
+      }
+      guild.joinChannel = channel.id;
+      caller.utils.updateGuild(guild);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          color: caller.color.green,
+          title: lang.titles.complete,
+          description: lang.commands.join.channelSet + channel.mention,
+        },
+      });
+      break;
+    }
+    case 'add': {
+      if (!command.params[1]) {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            description: lang.commands.join.messageMissing,
+            color: caller.color.yellow,
+          },
+        });
+        return;
+      }
+      const message = command.params.splice(1).join(' ');
+      guild.joinMessage.push(message);
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.complete,
+          description: lang.commands.join.messageSet,
+          color: caller.color.green,
+        },
+      });
+      caller.utils.updateGuild(guild);
+      break;
+    }
+    case 'remove': {
+      if (!command.params[1] || isNaN(parseInt(command.params[1], 10))) {
+        let messages = '';
+        guild.joinMessage.forEach((message, index) => {
+          messages += `${index}. ${message}`;
+        });
+        if (!messages.length) messages = lang.commands.join.noMessages;
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.use,
+            description: lang.commands.join.messagePick + messages,
+            color: caller.color.blue,
+          },
+        });
+        return;
+      }
+      if (guild.joinMessage[parseInt(command.params[1], 10)]) {
+        guild.joinMessage.splice(parseInt(command.params[1], 10), 1);
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.complete,
+            description: lang.commands.join.messageRemove,
             color: caller.color.green,
           },
         });
         caller.utils.updateGuild(guild);
-        break;
+      } else {
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            title: lang.titles.error,
+            description: lang.commands.join.unknownID,
+            color: caller.color.yellow,
+          },
+        });
       }
+      break;
+    }
     default:
-      caller.utils.message(command.msg.channel.id, {
+      caller.utils.createMessage(command.msg.channel.id, {
         embed: {
-          title: lang.join.title,
-          description: `**${command.prefix}${lang.join.help[0]}${command.prefix}${lang.join.help[1]}\n\n[${lang.guide}](https://zira.pw/guide/join)`,
           color: caller.color.blue,
+          title: lang.titles.use,
+          fields: [
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.join.main[0].name,
+              value: lang.commands.join.main[0].value,
+            },
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.join.main[1].name,
+              value: lang.commands.join.main[1].value,
+            }, {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.join.main[2].name,
+              value: lang.commands.join.main[2].value,
+            },
+            {
+              name: lang.commands.join.placeholderTitle,
+              value: lang.commands.join.placeholders,
+            },
+          ],
         },
       });
-    }
-  } else {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        title: lang.titleError,
-        description: lang.perm.noGuildPerm,
-        color: caller.color.yellow,
-      },
-    });
   }
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: true,
-    category: 'logs',
-  };
+exports.Settings = {
+  command: 'join',
+  category: 2,
+  show: true,
+  permissions: ['manageMessages'],
+  dm: false,
 };

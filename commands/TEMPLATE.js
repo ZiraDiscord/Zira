@@ -1,20 +1,14 @@
 'use strict';
 
-exports.Run = async function Run(caller, command, GUILD) {
-  if (!command.msg.channel.guild) {
-    caller.utils.message(command.msg.channel.id, {
-      embed: {
-        description: ':warning: This command can\'t be used in DM',
-        color: caller.color.yellow,
-      },
-    }).catch(console.error);
-    return;
-  }
-  const guild = GUILD; // eslint-disable-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+exports.Run = async function Run(caller, command, guild, lang) {
+  caller.utils.createMessage(command.msg.channel.id, 'Test');
 };
 
-exports.Settings = function Settings() {
-  return {
-    show: false,
-  };
+exports.Settings = {
+  command: 'TEMPLATE',
+  category: 0,
+  show: false,
+  permissions: ['manageMessages'],
+  dm: false,
 };
