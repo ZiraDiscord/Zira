@@ -10,15 +10,14 @@ exports.Run = async function Run(caller, command, guild, lang) {
         fields: [
           {
             name:
-              command.prefix + command.command + lang.commands.message.params,
-            value: lang.commands.message.help,
+              command.prefix + command.command + lang.commands.delete.params,
+            value: lang.commands.delete.help,
           },
           {
             name: lang.example,
             value: `${command.prefix + command.command} ${
               command.msg.id
-            }\n${command.prefix +
-              command.command} Epic message here :sunglasses:\n\n[${
+            } Updates\n\n[${
               lang.guidePage
             }](https://zira.pw/guide/${command.command})`,
           },
