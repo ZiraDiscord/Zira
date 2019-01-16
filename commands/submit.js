@@ -32,7 +32,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     });
     return;
   }
-  if (command.msg.channel.id !== guild.suggestion.submit) {
+  if (guild.suggestion.submit && command.msg.channel.id !== guild.suggestion.submit) {
     caller.utils.createMessage(command.msg.channel.id, {
       embed: {
         color: caller.color.yellow,
