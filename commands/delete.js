@@ -37,7 +37,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     return;
   }
   if (command.params[1] === 'check') {
-    if (!guild.roles.filter((r) => r.msg === command.params[0]).length) {
+    if (!guild.roles.filter((r) => r.message === command.params[0]).length) {
       caller.utils
         .createMessage(command.msg.channel.id, {
           embed: {
@@ -74,7 +74,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         .createMessage(command.msg.channel.id, {
           embed: {
             title: lang.titles.complete,
-            description: lang.commands.delete.removedChecl.replace('$num', Removed),
+            description: lang.commands.delete.removedCheck.replace('$num', Removed),
             color: caller.color.green,
           },
         });
