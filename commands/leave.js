@@ -5,7 +5,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
   switch (command.params[0]) {
     case 'channel': {
       if (command.params[1] === 'disable') {
-        guild.log = null;
+        guild.leaveChannel = null;
         caller.utils.updateGuild(guild);
         caller.utils.createMessage(command.msg.channel.id, {
           embed: {
