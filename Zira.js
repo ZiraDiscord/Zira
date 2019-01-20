@@ -26,7 +26,7 @@ class Zira {
       lastShardID,
       defaultImageFormat: 'png',
       compress: true,
-      messageLimit: 1,
+      messageLimit: 0,
     });
 
     this.id = cluster;
@@ -236,23 +236,19 @@ class Zira {
 
     process.on('message', (data) => {
       switch (data.name) {
-        case 'return':
-          this.ipc.emit(data.id, {
-            cluster: data.cluster,
-            data: data.data,
-          });
-          break;
         case 'guild': {
           const guild = this.bot.guilds.get(data.value);
           if (!guild) return;
           const guildObj = guild;
-          guildObj.channels = this.utils.mapObj(guild.channels);
-          guildObj.roles = this.utils.mapObj(guild.roles);
-          guildObj.members = this.utils.mapObj(guild.members);
+          guildObj.channels = this.utils.mapToArray(guild.channels);
+          guildObj.roles = this.utils.mapToArray(guild.roles);
+          guildObj.members = this.utils.mapToArray(guild.members);
+          guildObj.icon = guild.iconURL;
+          guildObj.created = guild.createdAt;
           process.send({
             name: 'return',
-            id: guildObj.id,
-            data: guildObj,
+            id: guild.id,
+            data: guild,
             cluster: this.id,
           });
           break;

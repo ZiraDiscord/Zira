@@ -45,7 +45,7 @@ class ClusterManager {
           const requester = this.clusters.get(queue);
           if (requester) {
             requester.worker.send({
-              name: 'return',
+              name: 'res',
               id: data.id,
               data: data.data,
               cluster: data.cluster,

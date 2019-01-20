@@ -327,12 +327,12 @@ class Utils {
     return res;
   }
 
-  mapObj(map) {
-    const obj = {};
-    map.forEach((value, key) => {
-      obj[key] = value;
+  mapToArray(map) {
+    const array = [];
+    map.forEach((value) => {
+      array.push(value);
     });
-    return obj;
+    return array;
   }
 
   async postStats(caller) {
@@ -359,7 +359,7 @@ class Utils {
     const ipc = await caller.ipc.getStats(new Date().getTime());
     await statsCollection.findOneAndUpdate(
       { id: 0 },
-      { id: 0, clusters: ipc.stats },
+      { id: 0, clusters: ipc.data },
     );
   }
 

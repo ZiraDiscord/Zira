@@ -1,15 +1,23 @@
 'use strict';
 
-const EventEmitter = require('eventemitter3');
+const queue = new Map();
 
-class IPC extends EventEmitter {
+class IPC {
+    constructor() {
+        process.on('message', (data) => {
+            if (queue.get(data.id)) {
+                queue.get(data.id)(data);
+                queue.delete(data.id);
+            }
+        });
+    }
+
     async getGuild(id) {
         process.send({ name: 'guild', id });
-        const self = this;
         return new Promise((resolve, reject) => {
-            const callback = data => resolve({ cluster: data.cluster, guild: data.data });
-            self.on(id, callback);
+            queue.set(id, resolve);
             setTimeout(() => {
+                queue.delete(id);
                 reject();
             }, 5000);
         });
@@ -17,11 +25,10 @@ class IPC extends EventEmitter {
 
     async getUser(id) {
         process.send({ name: 'user', id });
-        const self = this;
         return new Promise((resolve, reject) => {
-            const callback = data => resolve({ cluster: data.cluster, user: data.data });
-            self.on(id, callback);
+            queue.set(id, resolve);
             setTimeout(() => {
+                queue.delete(id);
                 reject();
             }, 5000);
         });
@@ -29,11 +36,10 @@ class IPC extends EventEmitter {
 
     async getStats(id) {
         process.send({ name: 'getStats', id });
-        const self = this;
         return new Promise((resolve, reject) => {
-            const callback = data => resolve({ cluster: data.cluster, stats: data.data });
-            self.on(id, callback);
+            queue.set(id, resolve);
             setTimeout(() => {
+                queue.delete(id);
                 reject();
             }, 5000);
         });
