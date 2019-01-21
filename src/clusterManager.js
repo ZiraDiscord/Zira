@@ -14,7 +14,7 @@ class ClusterManager {
     this.stats = {};
 
     if (process.env.ID && process.env.DBL) {
-      logger.info('Cluster', 'Posting', '600000ms');
+      logger.info('[Cluster] Posting 600000ms');
       setInterval(this.PostStats, 600000, this);
     }
 
