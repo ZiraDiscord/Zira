@@ -13,7 +13,7 @@ class ClusterManager {
     this.queue = new Map();
     this.stats = {};
 
-    if (process.env.ID && process.env.DBL && process.env.DBOT) {
+    if (process.env.ID && process.env.DBL) {
       logger.info('Cluster', 'Posting', '600000ms');
       setInterval(this.PostStats, 600000, this);
     }
