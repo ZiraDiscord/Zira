@@ -211,9 +211,9 @@ exports.Run = async function Run(caller, command, guild, lang) {
 };
 
 exports.Settings = {
-  command: 'TEMPLATE',
+  command: 'autorole',
   category: 0,
-  show: false,
-  permissions: ['manageMessages'],
+  show: true,
+  permissions: ['manageRoles'],
   dm: false,
 };
