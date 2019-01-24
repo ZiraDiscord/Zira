@@ -63,6 +63,21 @@ exports.Run = async function Run(caller, command, guild, lang) {
       caller.utils.updateGuild(guild);
       break;
     }
+    case 'list': {
+      let messages = '';
+      guild.joinMessage.forEach((message, index) => {
+        messages += `${index}. ${message}`;
+      });
+      if (!messages.length) messages = lang.commands.join.noMessages;
+      caller.utils.createMessage(command.msg.channel.id, {
+        embed: {
+          title: lang.titles.use,
+          description: lang.commands.join.messagePick + messages,
+          color: caller.color.blue,
+        },
+      });
+      break;
+    }
     case 'remove': {
       if (!command.params[1] || isNaN(parseInt(command.params[1], 10))) {
         let messages = '';
@@ -119,12 +134,20 @@ exports.Run = async function Run(caller, command, guild, lang) {
                 command.command +
                 lang.commands.join.main[1].name,
               value: lang.commands.join.main[1].value,
-            }, {
+            },
+            {
               name:
                 command.prefix +
                 command.command +
                 lang.commands.join.main[2].name,
               value: lang.commands.join.main[2].value,
+            },
+            {
+              name:
+                command.prefix +
+                command.command +
+                lang.commands.join.main[3].name,
+              value: lang.commands.join.main[3].value,
             },
             {
               name: lang.commands.join.placeholderTitle,

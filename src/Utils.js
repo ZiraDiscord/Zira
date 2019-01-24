@@ -273,7 +273,7 @@ class Utils {
         joinChannel: null,
         joinMessage: [],
         leaveChannel: null,
-        leaveMessage: null,
+        leaveMessage: [],
         bot: [],
         user: [],
         premium: false,
@@ -487,6 +487,9 @@ class Utils {
     let { joinMessage } = config;
     if (typeof joinMessage === 'string') joinMessage = [joinMessage];
     if (joinMessage === null) joinMessage = [];
+    let { leaveMessage } = config;
+    if (typeof leaveMessage === 'string') leaveMessage = [leaveMessage];
+    if (leaveMessage === null) leaveMessage = [];
     if (!config.suggestion) {
       config.suggestion = {
         submit: null,
@@ -513,7 +516,7 @@ class Utils {
       joinChannel: config.joinChannel ? config.joinChannel : null,
       joinMessage,
       leaveChannel: config.leaveChannel ? config.leaveChannel : null,
-      leaveMessage: config.leaveMessage ? config.leaveMessage : null,
+      leaveMessage,
       bot: config.bot ? config.bot : [],
       user: config.user ? config.user : [],
       premium: premium.premium,
