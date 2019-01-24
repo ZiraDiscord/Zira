@@ -46,7 +46,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
   if (
     process.env.PREMIUM &&
     !guild.premium &&
-    guild.roles.filter((r) => r.toggle).length > 11
+    guild.roles.filter((r) => r.toggle).length > 5
   ) {
     caller.utils.createMessage(command.msg.channel.id, {
       embed: {
@@ -61,7 +61,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
   if (
     process.env.PREMIUM &&
     !guild.premium &&
-    guild.roles.filter((r) => r.toggle).length + params.length > 11
+    guild.roles.filter((r) => r.toggle).length + params.length > 5
   ) {
     caller.utils.createMessage(command.msg.channel.id, {
       embed: {

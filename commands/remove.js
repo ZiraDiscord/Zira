@@ -44,7 +44,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     return;
   }
   const removeCount = guild.roles.filter((r) => r.remove).length;
-  if (!guild.premium && removeCount > 7 && process.env.PREMIUM) {
+  if (!guild.premium && removeCount > 5 && process.env.PREMIUM) {
     caller.utils.createMessage(command.msg.channel.id, {
       embed: {
         title: lang.titles.error,
@@ -101,8 +101,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
   }
   let emojiFree = true;
   for (let r = 0; r < guild.roles.length; r++) {
-    if (guild.roles[r].msg === guild.message) {
-      console.log(guild.roles[r].emoji === emoji, guild.roles[r].emoji, emoji);
+    if (guild.roles[r].message === guild.currentMessage) {
       if (guild.roles[r].emoji === emoji) emojiFree = false;
     }
   }
