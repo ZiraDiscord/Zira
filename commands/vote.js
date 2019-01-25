@@ -15,5 +15,5 @@ exports.Settings = {
   category: 3,
   show: true,
   permissions: [],
-  dm: false,
+  dm: true,
 };
