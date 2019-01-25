@@ -11,10 +11,7 @@ const IPC = require('./src/IPC.js');
 
 class Zira {
   constructor({
-    firstShardID,
-    lastShardID,
-    maxShards,
-    cluster,
+    firstShardID, lastShardID, maxShards, cluster,
   }) {
     this.bot = new Eris(process.env.TOKEN, {
       disableEvents: {
@@ -101,12 +98,24 @@ class Zira {
             });
             return;
           }
-          const permissions = JSON.parse(process.env.ADMINS).indexOf(command.msg.author.id) === -1 ? this.utils.checkPermissions(
-            command.msg.member ? command.msg.member.permission.json : {},
-            Command.Settings.permissions,
-          ) : { hasPermission: true, missing: [] };
-          if (permissions.hasPermission === false && command.msg.member.roles.indexOf(guild.commandRole) === -1) {
-            this.logger.warn(`${command.msg.author.username} is missing ${permissions.missing.join(', ')} to use ${command.command}`);
+          const permissions =
+            JSON.parse(process.env.ADMINS).indexOf(command.msg.author.id) === -1
+              ? this.utils.checkPermissions(
+                  command.msg.member ? command.msg.member.permission.json : {},
+                  Command.Settings.permissions,
+                )
+              : { hasPermission: true, missing: [] };
+          if (
+            permissions.hasPermission === false &&
+            command.msg.member.roles.indexOf(guild.commandRole) === -1
+          ) {
+            this.logger.warn(
+              `${
+                command.msg.author.username
+              } is missing ${permissions.missing.join(', ')} to use ${
+                command.command
+              }`,
+            );
             this.utils.createMessage(command.msg.channel.id, {
               embed: {
                 color: this.color.yellow,
@@ -255,11 +264,32 @@ class Zira {
         }
         case 'user': {
           const user = this.bot.users.get(data.value);
-          if (!user) return;
+          if (!user) {
+            process.send({
+              name: 'return',
+              id: data.value,
+              data: false,
+              cluster: this.id,
+            });
+            return;
+          }
+          user.guilds = this.bot.guilds
+            .filter((guild) => guild.members.get(data.value))
+            .map((guild) => ({ id: guild.id, name: guild.name }));
           process.send({
             name: 'return',
             id: user.id,
-            data: user,
+            data: {
+              id: user.id,
+              username: user.username,
+              discriminator: user.discriminator,
+              avatar: user.avatarURL,
+              bot: user.bot,
+              guilds: this.bot.guilds
+              .filter((guild) => guild.members.get(data.value))
+              .map((guild) => ({ id: guild.id, name: guild.name })),
+              createdAt: user.createdAt,
+            },
             cluster: this.id,
           });
           break;

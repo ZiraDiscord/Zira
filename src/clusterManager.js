@@ -35,14 +35,34 @@ class ClusterManager {
 
     this.cluster.on('message', async (worker, data) => {
       switch (data.name) {
-        case 'user':
+        case 'user': {
+          this.Find(1, data.name, data.id);
+          const obj = {
+            worker: worker.id,
+          };
+          this.clusters.forEach((d, i) => {
+            obj[i - 1] = null;
+          });
+          this.queue.set(data.id, obj);
+          break;
+        }
         case 'guild':
           this.Find(1, data.name, data.id);
-          this.queue.set(data.id, worker.id);
+          this.queue.set(data.id, { worker: worker.id });
           break;
         case 'return': {
           const queue = this.queue.get(data.id);
-          const requester = this.clusters.get(queue);
+          queue[data.cluster] = data.data;
+          this.queue.set(data.id, queue);
+          let all = true;
+          Object.keys(queue).forEach((key) => {
+            if (this.clusters.get(parseInt(key, 10))) {
+              if (queue[key] === null) all = false;
+            }
+          });
+          if (!all) return;
+          data.data = queue;
+          const requester = this.clusters.get(queue.worker);
           if (requester) {
             requester.worker.send({
               name: 'res',
