@@ -79,7 +79,7 @@ class Zira {
               : '';
           }
 
-          const lang = this.utils.getLang(guild ? guild.lang : { lang: 'en' });
+          const lang = this.utils.getLang(guild);
 
           this.logger.info(
             `${channel} ${command.msg.author.username} (${
