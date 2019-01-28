@@ -27,7 +27,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       lang = require(`../lang/${code}.json`); // eslint-disable-line
       caller.utils.createMessage(command.msg.channel.id, {
         embed: {
-          description: lang.lang.langUpdate,
+          description: lang.commands.lang.update,
           color: caller.color.green,
         },
       });
