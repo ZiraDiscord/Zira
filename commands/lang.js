@@ -24,7 +24,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
   const code = (command.params[0]) ? Sanitize(command.params[0]) : 'thisisntalanguage';
     if (fs.existsSync(`./lang/${code}.json`)) {
       guild.lang = code;
-      lang = require(`../lang/${code}.json`); // eslint-disable-line
+      lang = caller.utils.getLang(guild);
       caller.utils.createMessage(command.msg.channel.id, {
         embed: {
           description: lang.commands.lang.update,
