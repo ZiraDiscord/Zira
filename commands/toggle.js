@@ -61,7 +61,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
   if (
     process.env.PREMIUM &&
     !guild.premium &&
-    guild.roles.filter((r) => r.toggle).length + params.length > 5
+    guild.roles.filter((r) => r.toggle).length + params.length > 6
   ) {
     caller.utils.createMessage(command.msg.channel.id, {
       embed: {
