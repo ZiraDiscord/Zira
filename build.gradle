@@ -1,0 +1,26 @@
+plugins {
+    id'application'
+    id'com.github.johnrengelman.shadow' version '4.0.4'
+}
+
+mainClassName = 'pw.zira.bot.main.Zira'
+
+version '1.0'
+def jdaVersion = '3.8.1_437'
+
+sourceCompatibility = targetCompatibility = 1.8
+
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile "net.dv8tion:JDA:$jdaVersion"
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.1'
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.11'
+    compile("club.minnced:discord-webhooks:0.1.5")
+}
+
+compileJava.options.encoding = 'UTF-8'
