@@ -66,7 +66,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     case 'list': {
       let messages = '';
       guild.joinMessage.forEach((message, index) => {
-        messages += `${index}. ${message}`;
+        messages += `${index}. ${message}\n`;
       });
       if (!messages.length) messages = lang.commands.join.noMessages;
       caller.utils.createMessage(command.msg.channel.id, {
