@@ -29,6 +29,7 @@
     "eris": "^0.8.6",
     "erlpack": "github:abalabahaha/erlpack",
     "eventemitter3": "^3.1.0",
+    "mime": "^2.4.0",
     "moment": "^2.23.0",
     "monk": "^6.0.6",
     "numeral": "^2.0.6",

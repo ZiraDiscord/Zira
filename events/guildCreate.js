@@ -52,7 +52,7 @@ exports.Run = async function Run(caller, guild) {
   } else {
     const author = { name: 'Joined ' };
     if (verified) {
-      author.icon_url = 'https://cdn.discordapp.com/emojis/540680254956634133.png?v=1';
+      author.icon_url = 'https://cdn.discordapp.com/emojis/549209441220952064.png?v=1';
       author.name += 'Verified Guild';
     } else if (partnered) {
       author.icon_url = 'https://cdn.discordapp.com/emojis/540660679758184469.png?v=1';

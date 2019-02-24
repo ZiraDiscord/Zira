@@ -1,6 +1,8 @@
 'use strict';
 
 const fs = require('fs');
+const mime = require('mime');
+const request = require('request').defaults({ encoding: null });
 const logger = require('./logger');
 const DB = require('./DB');
 
@@ -577,10 +579,24 @@ class Utils {
 
   arraysEqual(array1, array2) {
     if (array1.length !== array2.length) return false;
-    for (let i = array1.length; i--; ) {
+    for (let i = array1.length; i--;) {
       if (array1[i] !== array2[i]) return false;
     }
     return true;
+  }
+
+  async getImageBuffer(attachments) {
+    return new Promise(async (resolve, reject) => {
+      if (!attachments.length || mime.getType(attachments[0].url).indexOf('image/') === -1) {
+        resolve(null);
+        return;
+      }
+      request(attachments[0].url, async (err, res, body) => {
+        if (err) {
+          reject(err);
+        } else resolve(body);
+      });
+    });
   }
 }
 

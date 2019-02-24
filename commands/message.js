@@ -92,12 +92,19 @@ exports.Run = async function Run(caller, command, guild, lang) {
       },
     });
   } else {
+    const image = await caller.utils.getImageBuffer(command.msg.attachments);
     let message;
     try {
-      message = await caller.bot.createMessage(
+      if (image) {
+        message = await caller.bot.createMessage(
         guild.currentChannel,
         command.params.join(' '),
-      );
+        {
+          file: image,
+          name: command.msg.attachments[0].filename,
+        },
+        );
+      } else message = await caller.bot.createMessage(guild.currentChannel, command.params.join(' '));
     } catch (e) {
       caller.logger.warn(
         `[Message Send] ${e.code} ${e.message.replace(/\n\s/g, '')}`,
