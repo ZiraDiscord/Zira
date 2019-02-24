@@ -5,6 +5,8 @@ exports.Run = async function Run(caller, _message, _emoji, _user) {
   const guild = await self.utils.getGuild(_message.channel.guild.id);
   if (guild.messages.indexOf(_message.id) === -1) return;
   if (!guild) return; // no idea why this would be undefined or null but yea
+  let hasRoles = guild.roles.filter(role => role.message === _message.id).length !== 0;
+  if (!hasRoles) return;
   const [role] = guild.roles.filter(
     (r) => r.message === _message.id &&
       (r.emoji === _emoji.name || r.emoji.indexOf(_emoji.id) !== -1),
