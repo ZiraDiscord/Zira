@@ -57,10 +57,38 @@ class Zira {
       });
       setInterval(this.utils.postStats, 5000, this);
       this.utils.postStats(this);
+      if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
+        this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+          embeds: [{
+            color: 7271027,
+            title: `Cluster ${this.id} Ready`,
+            description: `Shards: ${firstShardID} / ${lastShardID}\nTotal Shards: ${maxShards}\nGuilds: ${this.bot.guilds.size}`,
+            footer: {
+              text: this.bot.user.username,
+              icon_url: this.bot.user.avatarURL,
+            },
+            timestamp: new Date(),
+          }],
+        });
+      }
     });
 
     this.bot.on('shardReady', (shard) => {
       this.logger.info(`[Shard] Cluster: ${this.id} ID: ${shard} ready!`);
+      if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
+        this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+          embeds: [{
+            color: 7271027,
+            title: `Shard ${shard} Ready`,
+            description: `Cluster: ${this.id}`,
+            footer: {
+              text: this.bot.user.username,
+              icon_url: this.bot.user.avatarURL,
+            },
+            timestamp: new Date(),
+          }],
+        });
+      }
     });
 
     this.handler.on('command', async (command) => {
@@ -145,8 +173,58 @@ class Zira {
       }
     });
 
+    this.bot.on('disconnect', () => {
+      this.logger.warn(`[Cluster] ${this.id} disconnected`);
+      if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
+        this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+          embeds: [{
+            color: 16737075,
+            title: `Cluster ${this.id} Disconnected`,
+            description: `Shards: ${firstShardID} / ${lastShardID}\nTotal Shards: ${maxShards}`,
+            footer: {
+              text: this.bot.user.username,
+              icon_url: this.bot.user.avatarURL,
+            },
+            timestamp: new Date(),
+          }],
+        });
+      }
+    });
+
     this.bot.on('shardDisconnect', (message, shard) => {
       this.logger.warn(`[Shard] ${shard} disconnected ${message}`);
+      if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
+        this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+          embeds: [{
+            color: 16737075,
+            title: `Shard ${shard} Disconnected`,
+            description: `Cluster: ${this.id}`,
+            footer: {
+              text: this.bot.user.username,
+              icon_url: this.bot.user.avatarURL,
+            },
+            timestamp: new Date(),
+          }],
+        });
+      }
+    });
+
+    this.bot.on('shardResume', (shard) => {
+      this.logger.warn(`[Shard] ${shard} resumed`);
+      if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
+        this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+          embeds: [{
+            color: 16775040,
+            title: `Shard ${shard} Resumed`,
+            description: `Cluster: ${this.id}`,
+            footer: {
+              text: this.bot.user.username,
+              icon_url: this.bot.user.avatarURL,
+            },
+            timestamp: new Date(),
+          }],
+        });
+      }
     });
 
     this.bot.on('messageReactionAdd', async (message, emoji, user) => {
