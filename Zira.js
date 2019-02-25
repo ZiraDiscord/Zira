@@ -62,7 +62,7 @@ class Zira {
           embeds: [{
             color: 7271027,
             title: `Cluster ${this.id} Ready`,
-            description: `Shards: ${firstShardID} / ${lastShardID}\nTotal Shards: ${maxShards}\nGuilds: ${this.bot.guilds.size}`,
+            description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}\n**Guilds:** ${this.bot.guilds.size}`,
             footer: {
               text: this.bot.user.username,
               icon_url: this.bot.user.avatarURL,
@@ -80,7 +80,7 @@ class Zira {
           embeds: [{
             color: 7271027,
             title: `Shard ${shard} Ready`,
-            description: `Cluster: ${this.id}`,
+            description: `**Cluster:** ${this.id}`,
             footer: {
               text: this.bot.user.username,
               icon_url: this.bot.user.avatarURL,
@@ -180,7 +180,7 @@ class Zira {
           embeds: [{
             color: 16737075,
             title: `Cluster ${this.id} Disconnected`,
-            description: `Shards: ${firstShardID} / ${lastShardID}\nTotal Shards: ${maxShards}`,
+            description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}`,
             footer: {
               text: this.bot.user.username,
               icon_url: this.bot.user.avatarURL,
@@ -198,7 +198,7 @@ class Zira {
           embeds: [{
             color: 16737075,
             title: `Shard ${shard} Disconnected`,
-            description: `Cluster: ${this.id}`,
+            description: `**Cluster:** ${this.id}`,
             footer: {
               text: this.bot.user.username,
               icon_url: this.bot.user.avatarURL,
@@ -216,7 +216,7 @@ class Zira {
           embeds: [{
             color: 16775040,
             title: `Shard ${shard} Resumed`,
-            description: `Cluster: ${this.id}`,
+            description: `**Cluster:** ${this.id}`,
             footer: {
               text: this.bot.user.username,
               icon_url: this.bot.user.avatarURL,
@@ -328,7 +328,7 @@ class Zira {
         delete require.cache[require.resolve('./events/voiceChannelLeave.js')];
        }
     });
-    
+
      this.bot.on('voiceChannelSwitch', async (member, newChannel, oldChannel) => {
       try {
         const Handler = require('./events/voiceChannelSwitch.js'); // eslint-disable-line
@@ -339,7 +339,6 @@ class Zira {
         delete require.cache[require.resolve('./events/voiceChannelSwitch.js')];
       }
     });
- 
 
     this.bot.on('rawWS', async (packet) => {
       if (packet.t !== 'MESSAGE_DELETE' && packet.t !== 'MESSAGE_DELETE_BULK') {
