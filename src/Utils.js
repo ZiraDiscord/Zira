@@ -297,6 +297,7 @@ class Utils {
         prefix: null,
         lang: 'en',
         commandRole: null,
+        privateChannel: null,
         trello: {
           enabled: false,
           board: null,
@@ -555,6 +556,7 @@ class Utils {
       prefix: config.prefix ? config.prefix : null,
       lang: config.lang ? config.lang : 'en',
       commandRole: config.commandRole ? config.commandRole : null,
+      privateChannel: config.privateChannel ? config.privateChannel : null,
       trello: config.trello
         ? {
             enabled: config.trello.enabled,

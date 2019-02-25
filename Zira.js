@@ -307,6 +307,40 @@ class Zira {
       }
     });
 
+    this.bot.on('voiceChannelJoin', async (member, newChannel) => {
+      try {
+        const Handler = require('./events/voiceChannelJoin.js'); // eslint-disable-line
+        Handler.Run(this, member, newChannel, await this.utils.getGuild(member.guild.id));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        delete require.cache[require.resolve('./events/voiceChannelJoin.js')];
+      }
+    });
+
+    this.bot.on('voiceChannelLeave', async (member, oldChannel) => {
+      try {
+        const Handler = require('./events/voiceChannelLeave.js'); // eslint-disable-line
+        Handler.Run(this, member, oldChannel, await this.utils.getGuild(member.guild.id));
+      } catch (e) {
+        console.error(e);
+       } finally {
+        delete require.cache[require.resolve('./events/voiceChannelLeave.js')];
+       }
+    });
+    
+     this.bot.on('voiceChannelSwitch', async (member, newChannel, oldChannel) => {
+      try {
+        const Handler = require('./events/voiceChannelSwitch.js'); // eslint-disable-line
+        Handler.Run(this, member, newChannel, oldChannel, await this.utils.getGuild(member.guild.id));
+       } catch (e) {
+        console.error(e);
+      } finally {
+        delete require.cache[require.resolve('./events/voiceChannelSwitch.js')];
+      }
+    });
+ 
+
     this.bot.on('rawWS', async (packet) => {
       if (packet.t !== 'MESSAGE_DELETE' && packet.t !== 'MESSAGE_DELETE_BULK') {
         return;
