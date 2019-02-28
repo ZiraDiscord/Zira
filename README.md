@@ -1,8 +1,8 @@
 # Zira
 
 [![discord](https://discordapp.com/api/guilds/532372609476591626/widget.png?style=shield)](https://zira.pw/support)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/765b4d42b5b74bbc853a8d8da7b695e9)](https://www.codacy.com/app/Zira/Zira?utm_source=github.com&utm_medium=referral&utm_content=ZiraDiscord/Zira&utm_campaign=Badge_Grade)
 [![Crowdin](https://d322cqt584bo4o.cloudfront.net/zira/localized.svg)](https://translate.zira.pw/project/zira)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/765b4d42b5b74bbc853a8d8da7b695e9)](https://www.codacy.com/app/Zira/Zira?utm_source=github.com&utm_medium=referral&utm_content=ZiraDiscord/Zira&utm_campaign=Badge_Grade)
 [![Discord Bots](https://discordbots.org/api/widget/status/275813801792634880.svg)](https://discordbots.org/bot/275813801792634880)
 
 # Support
