@@ -13,7 +13,7 @@ class ClusterManager {
     this.queue = new Map();
     this.stats = {};
 
-    if (process.env.ID && process.env.DBL) {
+    if (process.env.ID) {
       logger.info('[Cluster] Posting 600000ms');
       setInterval(this.PostStats, 600000, this);
     }
@@ -33,47 +33,51 @@ class ClusterManager {
       });
     });
 
-    this.cluster.on('message', async (worker, data) => {
+    this.cluster.on('message', async(worker, data) => {
       switch (data.name) {
-        case 'user': {
-          this.Find(1, data.name, data.id);
-          const obj = {
-            worker: worker.id,
-          };
-          this.clusters.forEach((d, i) => {
-            obj[i - 1] = null;
-          });
-          this.queue.set(data.id, obj);
-          break;
-        }
+        case 'user':
+          {
+            this.Find(1, data.name, data.id);
+            const obj = {
+              worker: worker.id,
+            };
+            this.clusters.forEach((d, i) => {
+              obj[i - 1] = null;
+            });
+            this.queue.set(data.id, obj);
+            break;
+          }
         case 'guild':
           this.Find(1, data.name, data.id);
-          this.queue.set(data.id, { worker: worker.id });
-          break;
-        case 'return': {
-          const queue = this.queue.get(data.id);
-          queue[data.cluster] = data.data;
-          this.queue.set(data.id, queue);
-          let all = true;
-          Object.keys(queue).forEach((key) => {
-            if (this.clusters.get(parseInt(key, 10))) {
-              if (queue[key] === null) all = false;
-            }
+          this.queue.set(data.id, {
+            worker: worker.id
           });
-          if (!all) return;
-          data.data = queue;
-          const requester = this.clusters.get(queue.worker);
-          if (requester) {
-            requester.worker.send({
-              name: 'res',
-              id: data.id,
-              data: data.data,
-              cluster: data.cluster,
-            });
-            this.queue.delete(data.id);
-          }
           break;
-        }
+        case 'return':
+          {
+            const queue = this.queue.get(data.id);
+            queue[data.cluster] = data.data;
+            this.queue.set(data.id, queue);
+            let all = true;
+            Object.keys(queue).forEach((key) => {
+              if (this.clusters.get(parseInt(key, 10))) {
+                if (queue[key] === null) all = false;
+              }
+            });
+            if (!all) return;
+            data.data = queue;
+            const requester = this.clusters.get(queue.worker);
+            if (requester) {
+              requester.worker.send({
+                name: 'res',
+                id: data.id,
+                data: data.data,
+                cluster: data.cluster,
+              });
+              this.queue.delete(data.id);
+            }
+            break;
+          }
         case 'stats':
           this.stats[data.data.cluster] = data.data;
           break;
@@ -106,7 +110,7 @@ class ClusterManager {
       clusters--;
       clusterArray.push(a);
     }
-    clusterArray.forEach(async (item, index) => {
+    clusterArray.forEach(async(item, index) => {
       this.stats[index] = {
         messages: 0,
         commands: 0,
@@ -148,8 +152,8 @@ class ClusterManager {
     this.clusters.set(worker.id, {
       worker,
       id: cluster,
-      firstShardID,
-      lastShardID,
+        firstShardID,
+        lastShardID,
     });
   }
 
@@ -203,21 +207,91 @@ class ClusterManager {
       count += self.stats[key].guilds.length;
     });
     logger.info(`[Cluster] Guild count: ${count}`);
-    request({
-      uri: `https://discordbots.org/api/bots/${process.env.ID}/stats`,
-      headers: {
-        Authorization: process.env.DBL,
-      },
-      json: true,
-      method: 'POST',
-      body: {
-        server_count: count,
-      },
-    })
-      .on('complete', () => logger.info('[Cluster] DBL posted'))
-      .on('error', (e) => {
-        console.error(e);
-      });
+    if (process.env.DBL) {
+      request({
+          uri: `https://discordbots.org/api/bots/${process.env.ID}/stats`,
+          headers: {
+            Authorization: process.env.DBL,
+          },
+          json: true,
+          method: 'POST',
+          body: {
+            server_count: count,
+          },
+        })
+        .on('complete', () => logger.info('[Cluster] discordbots.org posted'))
+        .on('error', (e) => {
+          console.error(e);
+        });
+    }
+    if (process.env.BOD) {
+      request({
+          uri: `https://bots.ondiscord.xyz/bot-api/bots/${process.env.ID}/guilds`,
+          headers: {
+            Authorization: process.env.BOD,
+          },
+          json: true,
+          method: 'POST',
+          body: {
+            guildCount: count,
+          },
+        })
+        .on('complete', () => logger.info('[Cluster] bots.ondiscord.xyz posted'))
+        .on('error', (e) => {
+          console.error(e);
+        });
+    }
+    if (process.env.DDBL) {
+      request({
+          uri: `https://divinediscordbots.com/bots/${process.env.ID}/stats`,
+          headers: {
+            Authorization: process.env.DDBL,
+          },
+          json: true,
+          method: 'POST',
+          body: {
+            server_count: count,
+          },
+        })
+        .on('complete', () => logger.info('[Cluster] divinediscordbots.com posted'))
+        .on('error', (e) => {
+          console.error(e);
+        });
+    }
+    if (process.env.DBL2) {
+      request({
+          uri: `https://discordbotlist.com/api/bots/${process.env.ID}/stats`,
+          headers: {
+            Authorization: `Bot ${process.env.DBL2}`,
+          },
+          json: true,
+          method: 'POST',
+          body: {
+            guilds: count,
+          },
+        })
+        .on('complete', () => logger.info('[Cluster] discordbotlist.com posted'))
+        .on('error', (e) => {
+          console.error(e);
+        });
+    }
+    if (process.env.B4D) {
+      request({
+          uri: `https://botsfordiscord.com/api/bot/${process.env.ID}`,
+          headers: {
+            Authorization: process.env.B4D,
+          },
+          json: true,
+          method: 'POST',
+          body: {
+            server_count: count,
+          },
+        })
+        .on('complete', () => logger.info('[Cluster] botsfordiscord.com posted'))
+        .on('error', (e) => {
+          console.error(e);
+        });
+    }
   }
 }
 
