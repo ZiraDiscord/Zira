@@ -22,7 +22,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
               caller.utils.getRandomElement(
                 command.roles.filter((r) => r.name !== '@everyone'),
               ).mention
-            }\n\n[${lang.guidePage}](https://zira.pw/guide/${command.command})`,
+            }\n\n[${lang.guidePage}](https://docs.zira.ovh/${command.command})`,
           },
         ],
       },

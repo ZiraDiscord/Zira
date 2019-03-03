@@ -32,7 +32,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
                   caller.utils.getRandomElement(
                     command.channels.filter((c) => !c.type),
                   ).mention
-                }\n\n[${lang.guidePage}](https://zira.pw/guide/${
+                }\n\n[${lang.guidePage}](https://docs.zira.ovh/${
                   command.command
                 })`,
               },
@@ -102,7 +102,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
                   caller.utils.getRandomElement(
                     command.channels.filter((c) => !c.type),
                   ).mention
-                }\n\n[${lang.guidePage}](https://zira.pw/guide/${
+                }\n\n[${lang.guidePage}](https://docs.zira.ovh/${
                   command.command
                 })`,
               },
@@ -227,7 +227,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
                 value: `${command.prefix +
                   command.command} emojis :thumbsup: :thumbsdown:\n\n[${
                   lang.guidePage
-                }](https://zira.pw/guide/${command.command})`,
+                }](https://docs.zira.ovh/${command.command})`,
               },
             ],
           },
@@ -271,7 +271,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
                   caller.utils.getRandomElement(
                     command.channels.filter((c) => !c.type),
                   ).mention
-                }\n\n[${lang.guidePage}](https://zira.pw/guide/${
+                }\n\n[${lang.guidePage}](https://docs.zira.ovh/${
                   command.command
                 })`,
               },

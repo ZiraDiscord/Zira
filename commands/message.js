@@ -20,7 +20,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
             }\n${command.prefix +
               command.command} Epic message here :sunglasses:\n\n[${
               lang.guidePage
-            }](https://zira.pw/guide/${command.command})`,
+            }](https://docs.zira.ovh/${command.command})`,
           },
         ],
       },

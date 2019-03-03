@@ -16,7 +16,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
             name: lang.example,
             value: `${command.prefix + command.command} ${
               command.msg.id
-            } Epic new message\n\n[${lang.guidePage}](https://zira.pw/guide/${
+            } Epic new message\n\n[${lang.guidePage}](https://docs.zira.ovh/${
               command.command
             })`,
           },

@@ -52,7 +52,7 @@ class Zira {
     this.bot.on('ready', () => {
       this.logger.info(`[Cluster] ${this.id} ready!`);
       this.bot.editStatus({
-        name: `${process.env.PREFIX}help | zira.pw`,
+        name: `${process.env.PREFIX}help | docs.zira.ovh`,
         type: 0,
       });
       setInterval(this.utils.postStats, 5000, this);
