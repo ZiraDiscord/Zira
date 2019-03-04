@@ -5,15 +5,13 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/765b4d42b5b74bbc853a8d8da7b695e9)](https://www.codacy.com/app/Zira/Zira?utm_source=github.com&utm_medium=referral&utm_content=ZiraDiscord/Zira&utm_campaign=Badge_Grade)
 [![Discord Bots](https://discordbots.org/api/widget/status/275813801792634880.svg)](https://discordbots.org/bot/275813801792634880)
 
+# [Invite Zira](https://zira.ovh/invite)
+
 # Support
 
 We do not offer support in hosting your own version of Zira, if you find a bug, please make an issue here, do not create an issue to ask for help setting up a self-hosted version of Zira.
 
 If you find issues with the public version of Zira, please [join our support server](https://discord.gg/txeTgNr)
-
-# Update
-
-Zira has been revived. Invite the bot here: https://zira.ovh/invite
 
 # Install Guide
 
