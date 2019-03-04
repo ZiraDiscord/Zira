@@ -6,7 +6,6 @@
 [![Discord Bots](https://discordbots.org/api/widget/status/275813801792634880.svg)](https://discordbots.org/bot/275813801792634880)
 
 # [Invite Zira](https://zira.ovh/invite)
-testing
 
 # Support
 
