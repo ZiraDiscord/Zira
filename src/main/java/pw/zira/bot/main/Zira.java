@@ -1,47 +1,43 @@
 package pw.zira.bot.main;
 
-import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
-import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.JDABuilder;
 import pw.zira.bot.commands.*;
 import pw.zira.bot.events.Disconnect;
 import pw.zira.bot.events.PaginationHandler;
 import pw.zira.bot.events.Ready;
 import pw.zira.bot.events.Reconnect;
-import pw.zira.bot.utils.Pagination;
-import pw.zira.bot.utils.ShardStats;
-import pw.zira.bot.utils.Translations;
-import pw.zira.bot.utils.Utils;
+import pw.zira.bot.utils.*;
 
 import javax.security.auth.login.LoginException;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Zira {
     public final SettingsObject settings = new Settings().initialize();
     public final Database db = new Database(this);
     public final Translations i18n = new Translations(settings);
     public final Utils utils = new Utils();
-    public ShardManager shards = null;
-    public ShardStats stats = new ShardStats();
+    public Shards shards = new Shards();
     public final Pagination pagination = new Pagination();
+    public final Setup setup = new Setup();
+    public WebSocketClient ws = new WebSocketClient(this);
+    public String cluster = "0 / 0";
 
     public static void main(String[] args) {
         Zira zira = new Zira();
-        zira.start();
+        zira.ws.Connect();
     }
 
-    private void start() {
+    public void launchShards(List<Integer> shards, Integer totalShards, String cluster) {
         try {
-            for (int i = 0; i < settings.getShards(); i++)
-                stats.setShard(i);
-            DefaultShardManagerBuilder builder = new DefaultShardManagerBuilder();
+            this.cluster = cluster;
+            this.shards.setTotalShards(totalShards);
+            JDABuilder builder = new JDABuilder();
             builder.setToken(settings.getToken());
-            builder.setShardsTotal(settings.getShards());
 
             // Commands
             Help help = new Help(this);
-            builder.addEventListeners(help,
+            builder.addEventListener(help,
                     help.registerCommand(new Channel(this)),
                     help.registerCommand(new Message(this)),
                     help.registerCommand(new Add(this)),
@@ -49,11 +45,14 @@ public class Zira {
                     new Stats(this));
 
             // Events
-            builder.addEventListeners(new Ready(this),
+            builder.addEventListener(new Ready(this),
                     new Reconnect(this),
                     new Disconnect(this),
                     new PaginationHandler(this));
-            shards = builder.build();
+
+            for (Integer shard : shards) {
+                this.shards.setShard(shard, builder.useSharding(shard, totalShards).build(), db.loadShard(shard));
+            }
 
             TimerTask task = new TimerTask() {
                 @Override
@@ -62,8 +61,8 @@ public class Zira {
                 }
             };
             Timer timer = new Timer();
-            timer.scheduleAtFixedRate(task, 0,
-                    10000);
+            timer.scheduleAtFixedRate(task, 10000,
+                    1000);
         } catch (LoginException e) {
             System.out.println(e.getMessage());
         }
@@ -71,11 +70,11 @@ public class Zira {
 
 
     private void updateStats() {
-        for (JDA shard : shards.getShards()) {
+        for (Map.Entry<Integer, JDA> entry : shards.getShards().entrySet()) {
+            JDA shard = entry.getValue();
             int id = shard.getShardInfo().getShardId();
-            stats.setStatus(id, shard.getStatus()).setGuilds(id, shard.getGuilds()).setUsersAndBots(id, shard.getUsers()).setLatency(id, shard.getPing());
+            shards.setStatus(id, shard.getStatus()).setGuilds(id, shard.getGuilds()).setUsersAndBots(id, shard.getUsers()).setLatency(id, shard.getPing());
+            db.updateShard(id, shards);
         }
-        for (int i = 0; i < settings.getShards(); i++)
-            db.updateShard(i, stats);
     }
 }

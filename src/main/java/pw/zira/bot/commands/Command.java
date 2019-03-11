@@ -42,10 +42,10 @@ public abstract class Command extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (name.equals("help")) zira.stats.addMessage(event.getJDA().getShardInfo().getShardId());
+        if (name.equals("help")) zira.shards.addMessage(event.getJDA().getShardInfo().getShardId());
         if (event.getAuthor().isBot() || !ready) return;
         if (isCommand(event.getMessage()) && dmCheck(event)) {
-            zira.stats.addCommand(event.getJDA().getShardInfo().getShardId());
+            zira.shards.addCommand(event.getJDA().getShardInfo().getShardId());
             log(event);
             Guild guild = getGuild(event);
             language = zira.i18n.getCommand(guild.getLanguage(), name);

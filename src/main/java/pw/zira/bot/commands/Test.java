@@ -20,6 +20,7 @@ public class Test extends Command {
 
     @Override
     public void onCommand(MessageReceivedEvent event, List<String> params, Guild guild) {
+        zira.shards.getShard(1);
 //        sendMessage(event, new EmbedBuilder()
 //                .setTitle(zira.i18n.getBase("en", "example"))
 //                .setDescription(String.format(
@@ -35,18 +36,18 @@ public class Test extends Command {
 //                        guild.getRole()
 //                ))
 //                .build());
-        final HashMap<Integer, MessageEmbed> pages = new HashMap<>();
-        pages.put(0, new EmbedBuilder().setTitle("Page 1").build());
-        pages.put(1, new EmbedBuilder().setTitle("Page 2").build());
-        final Long user = event.getAuthor().getIdLong();
-        try {
-            event.getTextChannel().sendMessage(pages.get(0)).queue(res -> {
-                zira.pagination.addMessage(res, pages, user);
-            });
-        } catch (PermissionException e) {
-            System.out.println(e.getMessage());
-            if (e.getPermission().equals(Permission.MESSAGE_EMBED_LINKS))
-                sendMessage(event, new MessageBuilder().append("I'm unable to send the message as I'm missing the permission **Embed Links** in this channel.").build());
-        }
+//        final HashMap<Integer, MessageEmbed> pages = new HashMap<>();
+//        pages.put(0, new EmbedBuilder().setTitle("Page 1").build());
+//        pages.put(1, new EmbedBuilder().setTitle("Page 2").build());
+//        final Long user = event.getAuthor().getIdLong();
+//        try {
+//            event.getTextChannel().sendMessage(pages.get(0)).queue(res -> {
+//                zira.pagination.addMessage(res, pages, user);
+//            });
+//        } catch (PermissionException e) {
+//            System.out.println(e.getMessage());
+//            if (e.getPermission().equals(Permission.MESSAGE_EMBED_LINKS))
+//                sendMessage(event, new MessageBuilder().append("I'm unable to send the message as I'm missing the permission **Embed Links** in this channel.").build());
+//        }
     }
 }

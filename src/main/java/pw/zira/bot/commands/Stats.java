@@ -1,11 +1,14 @@
 package pw.zira.bot.commands;
 
 import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import pw.zira.bot.main.Zira;
 import pw.zira.bot.utils.Guild;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
 import java.util.*;
 
 
@@ -17,25 +20,27 @@ public class Stats extends Command {
     public void onCommand(MessageReceivedEvent event, List<String> params, Guild guild) {
         if (!zira.settings.getAdmins().contains(event.getAuthor().getId())) return;
         EmbedBuilder embed = new EmbedBuilder();
-        int shardTotal = zira.settings.getShards();
+        int shardTotal = zira.shards.getTotalShards();
         int color = zira.utils.lightGreen;
-        for (int i = 0; i < shardTotal; i++) {
-            if (zira.stats.getStatusInt(i) < 7) color = zira.utils.lightYellow;
-            if (zira.stats.getStatusInt(i) > 7) color = zira.utils.lightRed;
-            embed.addField("Shard [" + i + " / " + shardTotal + "]",
+        for (Map.Entry<Integer, JDA> entry : zira.shards.getShards().entrySet()) {
+            Integer shard = entry.getKey();
+            if (zira.shards.getStatusInt(shard) < 7) color = zira.utils.lightYellow;
+            if (zira.shards.getStatusInt(shard) > 7) color = zira.utils.lightRed;
+            embed.addField("Shard [" + shard + " / " + shardTotal + "]",
                     String.format("**Status:**\n%s\n**Messages:** %s\n**Commands:** %s\n**Users:** %s\n**Bots:** %s\n**Latency:** %s\n\n**Guilds:**\n**Normal:** %s\n\t**Large:** %S\n\t**Partnered:** %s\n\t**Verified:** %s",
-                            zira.stats.getStatusName(i),
-                            zira.stats.getMessages(i),
-                            zira.stats.getCommands(i),
-                            zira.stats.getUsers(i),
-                            zira.stats.getBots(i),
-                            zira.stats.getLatency(i),
-                            zira.stats.getGuildsNormal(i),
-                            zira.stats.getGuildsLarge(i),
-                            zira.stats.getGuildsPartnered(i),
-                            zira.stats.getGuildsVerified(i)), true);
+                            zira.shards.getStatusName(shard),
+                            zira.shards.getMessages(shard),
+                            zira.shards.getCommands(shard),
+                            zira.shards.getUsers(shard),
+                            zira.shards.getBots(shard),
+                            zira.shards.getLatency(shard),
+                            zira.shards.getGuildsNormal(shard),
+                            zira.shards.getGuildsLarge(shard),
+                            zira.shards.getGuildsPartnered(shard),
+                            zira.shards.getGuildsVerified(shard)), true);
         }
-        embed.setColor(color);
+        MemoryUsage heapMemoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+        embed.setColor(color).setTitle("Memory Usage").setDescription(heapMemoryUsage.getUsed() / 1024 / 1024 + " Mb").setFooter("Cluster " + zira.cluster, null);
         sendMessage(event, embed.build());
     }
 }

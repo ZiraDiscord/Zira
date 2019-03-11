@@ -1,7 +1,7 @@
 package pw.zira.bot.main;
 
 import pw.zira.bot.utils.Guild;
-import pw.zira.bot.utils.ShardStats;
+import pw.zira.bot.utils.Shards;
 
 import java.sql.*;
 
@@ -83,7 +83,8 @@ public class Database {
     public Guild getGuild(Long id) {
         PreparedStatement statement;
         ResultSet result;
-        String name = zira.shards.getGuildById(id).getName();
+
+        String name = zira.shards.getJDA().getGuildById(id).getName();
         Guild res = null;
         try {
             statement = connection.prepareStatement("SELECT * FROM `guilds` WHERE `id` = ? LIMIT 1;");
@@ -158,7 +159,21 @@ public class Database {
         }
     }
 
-    public void updateShard(int shard, ShardStats stats) {
+    public ResultSet loadShard(int shard) {
+        PreparedStatement statement;
+        ResultSet res = null;
+        try {
+            statement = connection.prepareStatement("SELECT * FROM `shards` WHERE id = ?;");
+            statement.setInt(1, shard);
+            res = statement.executeQuery();
+            res.next();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return res;
+    }
+
+    public void updateShard(int shard, Shards stats) {
         PreparedStatement statement;
         try {
             statement = connection.prepareStatement("INSERT INTO `shards` (id, status, messages, commands, users, bots, latency, normal, large, verified, partnered, given,\n" +
@@ -183,7 +198,8 @@ public class Database {
             statement.setInt(4, stats.getCommands(shard));
             statement.setInt(5, stats.getUsers(shard));
             statement.setInt(6, stats.getBots(shard));
-            statement.setLong(7, stats.getLatency(shard));;
+            statement.setLong(7, stats.getLatency(shard));
+            ;
             statement.setInt(8, stats.getGuildsNormal(shard));
             statement.setInt(9, stats.getGuildsLarge(shard));
             statement.setInt(10, stats.getGuildsVerified(shard));

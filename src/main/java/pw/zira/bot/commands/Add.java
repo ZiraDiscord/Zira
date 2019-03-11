@@ -1,6 +1,7 @@
 package pw.zira.bot.commands;
 
 import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.Role;
@@ -64,6 +65,20 @@ public class Add extends Command {
                     .setColor(zira.utils.lightYellow)
                     .setDescription(zira.i18n.getError(guild.getLanguage(), "unknownRole")).build());
             return;
+        }
+
+        TextChannel channel = event.getGuild().getTextChannelById(guild.getChannel());
+        try {
+            if (event.getMessage().getEmotes().size() > 0) {
+                channel.addReactionById(guild.getMessage(), event.getMessage().getEmotes().get(0)).queue();
+            } else {
+                channel.addReactionById(guild.getMessage(), emoji).queue(success -> {
+
+                });
+            }
+        } catch (
+                Exception e) {
+            System.out.println(e);
         }
 
     }

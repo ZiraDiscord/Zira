@@ -6,13 +6,14 @@ import java.util.ArrayList;
 public class SettingsObject {
     private String token;
     private String prefix;
-    private int shards;
     private ArrayList<String> admins = new ArrayList<>();
     private ArrayList<String> languages = new ArrayList<>();
     private String MySQLHost;
     private String MySQLUser;
     private String MySQLPassword;
     private String statusWebhook;
+    private String API;
+    private String APIToken;
 
     public String getToken() {
         return token;
@@ -29,14 +30,6 @@ public class SettingsObject {
     public void setPrefix(String prefix) {
         System.out.printf("Prefix set to %s\n", prefix);
         this.prefix = prefix;
-    }
-
-    public int getShards() {
-        return shards;
-    }
-
-    public void setShards(Long shards) {
-        this.shards = Math.toIntExact(shards);
     }
 
     public ArrayList<String> getAdmins() {
@@ -86,5 +79,21 @@ public class SettingsObject {
 
     public void setStatusWebhook(String statusWebhook) {
         this.statusWebhook = statusWebhook;
+    }
+
+    public void setAPI(String API) {
+        this.API = API;
+    }
+
+    public String getAPI() {
+        return API;
+    }
+
+    public void setAPIToken(String APIToken) {
+        this.APIToken = APIToken;
+    }
+
+    public String getAPIToken() {
+        return APIToken;
     }
 }

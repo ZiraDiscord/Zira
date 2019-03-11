@@ -41,7 +41,7 @@ public class Ready extends ListenerAdapter {
             client.close();
             System.out.printf("Shard %d ready - %d Guilds - %d Users\n", shard, event.getGuildTotalCount(), event.getJDA().getUsers().size());
             event.getJDA().getPresence().setGame(Game.playing(zira.settings.getPrefix() + "help | docs.zira.pw"));
-            zira.stats.setGuilds(shard, event.getJDA().getGuilds()).setUsersAndBots(shard, event.getJDA().getUsers()).setLatency(shard, event.getJDA().getPing());
+            zira.shards.setGuilds(shard, event.getJDA().getGuilds()).setUsersAndBots(shard, event.getJDA().getUsers()).setLatency(shard, event.getJDA().getPing());
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -49,7 +49,7 @@ public class Ready extends ListenerAdapter {
 
     @Override
     public void onStatusChange(StatusChangeEvent event) {
-        if (event.getJDA().getShardInfo() != null) zira.stats.setStatus(event.getJDA().getShardInfo().getShardId(), event.getNewStatus());
+        if (event.getJDA().getShardInfo() != null) zira.shards.setStatus(event.getJDA().getShardInfo().getShardId(), event.getNewStatus());
 //        System.out.println(event.getNewStatus().name() + " " + event.getNewStatus().ordinal());
     }
 }
