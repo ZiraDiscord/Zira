@@ -147,6 +147,15 @@ exports.Run = async function Run(caller, command, guild, lang) {
             },
           });
           break;
+        case 30010:
+          caller.utils.createMessage(command.msg.channel.id, {
+            embed: {
+              color: caller.color.yellow,
+              title: lang.titles.error,
+              description: lang.errors.maxReactions,
+            },
+          });
+          break;
         default:
           caller.utils.createMessage(command.msg.channel.id, {
             embed: {

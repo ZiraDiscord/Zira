@@ -10,18 +10,12 @@ exports.Run = async function Run(caller, command, guild, lang) {
         fields: [
           {
             name: command.prefix + command.command + lang.commands.remove.params,
-            value: `${lang.commands.remove.help}\n${
-              lang.commands.remove.description
-            }`,
+            value: `${lang.commands.remove.help}\n${lang.commands.remove.description}`,
           },
           {
             name: lang.example,
-            value: `${command.prefix +
-              command.command} :white_check_mark: Verification\n${command.prefix +
-              command.command} :white_check_mark: Verification, ${
-              caller.utils.getRandomElement(
-                command.roles.filter((r) => r.name !== '@everyone'),
-              ).mention
+            value: `${command.prefix + command.command} :white_check_mark: Verification\n${command.prefix + command.command} :white_check_mark: Verification, ${
+              caller.utils.getRandomElement(command.roles.filter((r) => r.name !== '@everyone')).mention
             }\n\n[${lang.guidePage}](https://docs.zira.ovh/${command.command})`,
           },
         ],
@@ -29,11 +23,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     });
     return;
   }
-  if (
-    !guild.currentChannel ||
-    !guild.currentMessage ||
-    !guild.messages.length
-  ) {
+  if (!guild.currentChannel || !guild.currentMessage || !guild.messages.length) {
     caller.utils.createMessage(command.msg.channel.id, {
       embed: {
         color: caller.color.yellow,
@@ -62,38 +52,26 @@ exports.Run = async function Run(caller, command, guild, lang) {
   Params.forEach((item, index) => {
     if (item.indexOf('<@&') !== -1) Params[index] = item.replace(/\D+/g, '');
   });
-  const [remove] = command.msg.channel.guild.roles.filter(
-    (r) => r.id === Params[0] ||
-      r.name.toLowerCase().indexOf(Params[0].toLowerCase()) !== -1,
-  );
+  const [remove] = command.msg.channel.guild.roles.filter((r) => r.id === Params[0] || r.name.toLowerCase().indexOf(Params[0].toLowerCase()) !== -1);
   if (!remove) {
     caller.utils.createMessage(command.msg.channel.id, {
       embed: {
         color: caller.color.yellow,
         title: lang.titles.error,
-        description: lang.errors.ordinalPair.replace(
-          '$pair',
-          caller.utils.ordinalSuffix(1),
-        ),
+        description: lang.errors.ordinalPair.replace('$pair', caller.utils.ordinalSuffix(1)),
       },
     });
     return;
   }
   let add;
   if (Params[1]) {
-    [add] = command.msg.channel.guild.roles.filter(
-      (r) => r.id === Params[1] ||
-        r.name.toLowerCase().indexOf(Params[1].toLowerCase()) !== -1,
-    );
+    [add] = command.msg.channel.guild.roles.filter((r) => r.id === Params[1] || r.name.toLowerCase().indexOf(Params[1].toLowerCase()) !== -1);
     if (!add) {
       caller.utils.createMessage(command.msg.channel.id, {
         embed: {
           color: caller.color.yellow,
           title: lang.titles.error,
-          description: lang.errors.ordinalPair.replace(
-            '$pair',
-            caller.utils.ordinalSuffix(1),
-          ),
+          description: lang.errors.ordinalPair.replace('$pair', caller.utils.ordinalSuffix(1)),
         },
       });
       return;
@@ -110,27 +88,15 @@ exports.Run = async function Run(caller, command, guild, lang) {
       embed: {
         color: caller.color.yellow,
         title: lang.titles.error,
-        description: lang.errors.usedEmoji.replace(
-          '$pair',
-          caller.utils.ordinalSuffix(1),
-        ),
+        description: lang.errors.usedEmoji.replace('$pair', caller.utils.ordinalSuffix(1)),
       },
     });
     return;
   }
   try {
-    await caller.bot.addMessageReaction(
-      guild.currentChannel,
-      guild.currentMessage,
-      emoji.replace(/(<:)|(<)|(>)/g, ''),
-    );
+    await caller.bot.addMessageReaction(guild.currentChannel, guild.currentMessage, emoji.replace(/(<:)|(<)|(>)/g, ''));
   } catch (e) {
-    caller.logger.warn(
-      `[Remove] ${command.msg.channel.id} ${e.code} ${e.message.replace(
-        /\n\s/g,
-        '',
-      )}`,
-    );
+    caller.logger.warn(`[Remove] ${command.msg.channel.id} ${e.code} ${e.message.replace(/\n\s/g, '')}`);
     switch (e.code) {
       case 10003:
       case 50001: // read access
@@ -169,6 +135,15 @@ exports.Run = async function Run(caller, command, guild, lang) {
           },
         });
         break;
+      case 30010:
+        caller.utils.createMessage(command.msg.channel.id, {
+          embed: {
+            color: caller.color.yellow,
+            title: lang.titles.error,
+            description: lang.errors.maxReactions,
+          },
+        });
+        break;
       default:
         caller.utils.createMessage(command.msg.channel.id, {
           embed: {
@@ -180,18 +155,11 @@ exports.Run = async function Run(caller, command, guild, lang) {
     }
     return;
   }
-  const message = add
-    ? lang.commands.remove.removeAdd
-        .replace('$role1', remove.mention)
-        .replace('$role2', add.mention)
-    : lang.commands.remove.remove
-        .replace('$role', remove.mention);
+  const message = add ? lang.commands.remove.removeAdd.replace('$role1', remove.mention).replace('$role2', add.mention) : lang.commands.remove.remove.replace('$role', remove.mention);
   guild.roles.push({
     add: add ? add.id : null,
     id: remove.id,
-    name: add
-    ? `${remove.mention}, ${add.mention}`
-    : remove.mention,
+    name: add ? `${remove.mention}, ${add.mention}` : remove.mention,
     emoji,
     message: guild.currentMessage,
     channel: guild.currentChannel,
