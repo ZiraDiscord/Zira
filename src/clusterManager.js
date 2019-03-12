@@ -33,51 +33,51 @@ class ClusterManager {
       });
     });
 
-    this.cluster.on('message', async(worker, data) => {
+    setInterval(this.Cachet, 120000, this);
+
+    this.cluster.on('message', async (worker, data) => {
       switch (data.name) {
-        case 'user':
-          {
-            this.Find(1, data.name, data.id);
-            const obj = {
-              worker: worker.id,
-            };
-            this.clusters.forEach((d, i) => {
-              obj[i - 1] = null;
-            });
-            this.queue.set(data.id, obj);
-            break;
-          }
+        case 'user': {
+          this.Find(1, data.name, data.id);
+          const obj = {
+            worker: worker.id,
+          };
+          this.clusters.forEach((d, i) => {
+            obj[i - 1] = null;
+          });
+          this.queue.set(data.id, obj);
+          break;
+        }
         case 'guild':
           this.Find(1, data.name, data.id);
           this.queue.set(data.id, {
-            worker: worker.id
+            worker: worker.id,
           });
           break;
-        case 'return':
-          {
-            const queue = this.queue.get(data.id);
-            queue[data.cluster] = data.data;
-            this.queue.set(data.id, queue);
-            let all = true;
-            Object.keys(queue).forEach((key) => {
-              if (this.clusters.get(parseInt(key, 10))) {
-                if (queue[key] === null) all = false;
-              }
-            });
-            if (!all) return;
-            data.data = queue;
-            const requester = this.clusters.get(queue.worker);
-            if (requester) {
-              requester.worker.send({
-                name: 'res',
-                id: data.id,
-                data: data.data,
-                cluster: data.cluster,
-              });
-              this.queue.delete(data.id);
+        case 'return': {
+          const queue = this.queue.get(data.id);
+          queue[data.cluster] = data.data;
+          this.queue.set(data.id, queue);
+          let all = true;
+          Object.keys(queue).forEach((key) => {
+            if (this.clusters.get(parseInt(key, 10))) {
+              if (queue[key] === null) all = false;
             }
-            break;
+          });
+          if (!all) return;
+          data.data = queue;
+          const requester = this.clusters.get(queue.worker);
+          if (requester) {
+            requester.worker.send({
+              name: 'res',
+              id: data.id,
+              data: data.data,
+              cluster: data.cluster,
+            });
+            this.queue.delete(data.id);
           }
+          break;
+        }
         case 'stats':
           this.stats[data.data.cluster] = data.data;
           break;
@@ -95,11 +95,7 @@ class ClusterManager {
   }
 
   start() {
-    logger.info(
-      `[Cluster] Starting ${this.numberOfShards} shards over ${
-        this.numberOfClusters
-      } clusters`,
-    );
+    logger.info(`[Cluster] Starting ${this.numberOfShards} shards over ${this.numberOfClusters} clusters`);
     let offset = 0;
     let shards = this.numberOfShards;
     let clusters = this.numberOfClusters;
@@ -110,7 +106,7 @@ class ClusterManager {
       clusters--;
       clusterArray.push(a);
     }
-    clusterArray.forEach(async(item, index) => {
+    clusterArray.forEach(async (item, index) => {
       this.stats[index] = {
         messages: 0,
         commands: 0,
@@ -137,12 +133,8 @@ class ClusterManager {
     this.cluster.disconnect(() => this.start());
   }
 
-  createNewWorker({
-    firstShardID, lastShardID, maxShards, cluster,
-  }) {
-    logger.info(
-      `[Cluster] Created Cluster ${cluster} created with shards ${firstShardID} - ${lastShardID} of ${maxShards} shards`,
-    );
+  createNewWorker({ firstShardID, lastShardID, maxShards, cluster }) {
+    logger.info(`[Cluster] Created Cluster ${cluster} created with shards ${firstShardID} - ${lastShardID} of ${maxShards} shards`);
     const worker = this.cluster.fork({
       firstShardID,
       lastShardID,
@@ -152,32 +144,22 @@ class ClusterManager {
     this.clusters.set(worker.id, {
       worker,
       id: cluster,
-        firstShardID,
-        lastShardID,
+      firstShardID,
+      lastShardID,
     });
   }
 
   onOnlineWorker(worker) {
     const cluster = this.clusters.get(worker.id);
-    logger.info(
-      `[Cluster] Online ID: ${cluster.id} - Cluster ${cluster.id} shards ${
-        cluster.firstShardID
-      } - ${cluster.lastShardID}`,
-    );
+    logger.info(`[Cluster] Online ID: ${cluster.id} - Cluster ${cluster.id} shards ${cluster.firstShardID} - ${cluster.lastShardID}`);
   }
 
   onDeadWorker(deadWorker, reason) {
     if (this.exit) return;
     const cluster = this.clusters.get(deadWorker.id);
-    logger.warn(
-      `[Cluster] Died ID: ${deadWorker.id} - Cluster ${
-        cluster.id
-      } died: ${reason}`,
-    );
+    logger.warn(`[Cluster] Died ID: ${deadWorker.id} - Cluster ${cluster.id} died: ${reason}`);
     if (!this.clusters.get(deadWorker.id)) {
-      logger.error(
-        `[Cluster] Not Found ID: ${deadWorker.id} - Cluster ${cluster.id}`,
-      );
+      logger.error(`[Cluster] Not Found ID: ${deadWorker.id} - Cluster ${cluster.id}`);
       this.restart();
     } else {
       const deadCluster = this.clusters.get(deadWorker.id);
@@ -209,16 +191,16 @@ class ClusterManager {
     logger.info(`[Cluster] Guild count: ${count}`);
     if (process.env.DBL) {
       request({
-          uri: `https://discordbots.org/api/bots/${process.env.ID}/stats`,
-          headers: {
-            Authorization: process.env.DBL,
-          },
-          json: true,
-          method: 'POST',
-          body: {
-            server_count: count,
-          },
-        })
+        uri: `https://discordbots.org/api/bots/${process.env.ID}/stats`,
+        headers: {
+          Authorization: process.env.DBL,
+        },
+        json: true,
+        method: 'POST',
+        body: {
+          server_count: count,
+        },
+      })
         .on('complete', () => logger.info('[Cluster] discordbots.org posted'))
         .on('error', (e) => {
           console.error(e);
@@ -226,16 +208,16 @@ class ClusterManager {
     }
     if (process.env.BOD) {
       request({
-          uri: `https://bots.ondiscord.xyz/bot-api/bots/${process.env.ID}/guilds`,
-          headers: {
-            Authorization: process.env.BOD,
-          },
-          json: true,
-          method: 'POST',
-          body: {
-            guildCount: count,
-          },
-        })
+        uri: `https://bots.ondiscord.xyz/bot-api/bots/${process.env.ID}/guilds`,
+        headers: {
+          Authorization: process.env.BOD,
+        },
+        json: true,
+        method: 'POST',
+        body: {
+          guildCount: count,
+        },
+      })
         .on('complete', () => logger.info('[Cluster] bots.ondiscord.xyz posted'))
         .on('error', (e) => {
           console.error(e);
@@ -243,16 +225,16 @@ class ClusterManager {
     }
     if (process.env.DDBL) {
       request({
-          uri: `https://divinediscordbots.com/bots/${process.env.ID}/stats`,
-          headers: {
-            Authorization: process.env.DDBL,
-          },
-          json: true,
-          method: 'POST',
-          body: {
-            server_count: count,
-          },
-        })
+        uri: `https://divinediscordbots.com/bots/${process.env.ID}/stats`,
+        headers: {
+          Authorization: process.env.DDBL,
+        },
+        json: true,
+        method: 'POST',
+        body: {
+          server_count: count,
+        },
+      })
         .on('complete', () => logger.info('[Cluster] divinediscordbots.com posted'))
         .on('error', (e) => {
           console.error(e);
@@ -260,16 +242,16 @@ class ClusterManager {
     }
     if (process.env.DBL2) {
       request({
-          uri: `https://discordbotlist.com/api/bots/${process.env.ID}/stats`,
-          headers: {
-            Authorization: `Bot ${process.env.DBL2}`,
-          },
-          json: true,
-          method: 'POST',
-          body: {
-            guilds: count,
-          },
-        })
+        uri: `https://discordbotlist.com/api/bots/${process.env.ID}/stats`,
+        headers: {
+          Authorization: `Bot ${process.env.DBL2}`,
+        },
+        json: true,
+        method: 'POST',
+        body: {
+          guilds: count,
+        },
+      })
         .on('complete', () => logger.info('[Cluster] discordbotlist.com posted'))
         .on('error', (e) => {
           console.error(e);
@@ -277,21 +259,106 @@ class ClusterManager {
     }
     if (process.env.B4D) {
       request({
-          uri: `https://botsfordiscord.com/api/bot/${process.env.ID}`,
-          headers: {
-            Authorization: process.env.B4D,
-          },
-          json: true,
-          method: 'POST',
-          body: {
-            server_count: count,
-          },
-        })
+        uri: `https://botsfordiscord.com/api/bot/${process.env.ID}`,
+        headers: {
+          Authorization: process.env.B4D,
+        },
+        json: true,
+        method: 'POST',
+        body: {
+          server_count: count,
+        },
+      })
         .on('complete', () => logger.info('[Cluster] botsfordiscord.com posted'))
         .on('error', (e) => {
           console.error(e);
         });
     }
+  }
+
+  Cachet(caller) {
+    request(
+      {
+        uri: `${process.env.CACHET_URL}/api/v1/components/groups`,
+        method: 'GET',
+      },
+      (err, res, body) => {
+        const { enabled_components } = JSON.parse(body).data[2];
+        let shards = [];
+        Object.keys(caller.stats).forEach((key) => {
+          shards = shards.concat(caller.stats[key].status);
+        });
+        const components = [];
+        let lastOrder = 0;
+        enabled_components.forEach((component) => {
+          if (component.order > lastOrder) lastOrder = component.order;
+          shards.forEach((shard, index) => {
+            if (component.name === `Shard ${shard.id}`) {
+              component.shard = shard;
+              components.push(component);
+              shards.splice(index, 1);
+            }
+          });
+        });
+        shards.forEach((shard) => {
+          caller.CreateComponent(shard, lastOrder);
+        });
+        components.forEach((component) => {
+          caller.UpdateComponent(component);
+        });
+      },
+    );
+  }
+
+  CreateComponent(shard, order) {
+    request(
+      {
+        uri: `${process.env.CACHET_URL}/api/v1/components`,
+        method: 'POST',
+        headers: {
+          'X-Cachet-Token': process.env.CACHET,
+        },
+        json: true,
+        body: {
+          name: `Shard ${shard.id}`,
+          status: 1,
+          group_id: 3,
+          enabled: 'true',
+          order: order + 1,
+        },
+      },
+      (err) => {
+        if (err) {
+          console.error(err);
+        } else logger.info(`[Cachet] Created Shard ${shard.id} Component`);
+      },
+    );
+  }
+
+  UpdateComponent(component) {
+    let status = 1;
+    const { shard } = component;
+    if (shard.status === 'disconnected') status = 4;
+    if (shard.status === 'handshaking') status = 2;
+    if (shard.status === 'connecting') status = 3;
+    request(
+      {
+        uri: `${process.env.CACHET_URL}/api/v1/components/${component.id}`,
+        method: 'PUT',
+        headers: {
+          'X-Cachet-Token': process.env.CACHET,
+        },
+        json: true,
+        body: {
+          status,
+        },
+      },
+      (err) => {
+        if (err) {
+          console.error(err);
+        } else logger.info(`[Cachet] Update Shard ${shard.id} Component`);
+      },
+    );
   }
 }
 

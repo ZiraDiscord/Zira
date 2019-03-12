@@ -355,6 +355,7 @@ class Utils {
         cluster: caller.id,
         shards: caller.bot.shards.size,
         latency: caller.bot.shards.map((shard) => shard.latency),
+        status: caller.bot.shards.map((shard) => ({ id: shard.id, status: shard.status })),
       },
     });
     if (!process.env.API) return;
