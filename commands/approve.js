@@ -140,6 +140,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       guild.trello.approved.id,
     );
   }
+  command.msg.delete().catch(() => {});
   caller.bot
     .createMessage(command.msg.channel.id, {
       embed: {

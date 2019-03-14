@@ -92,7 +92,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       newSuggestion = await caller.bot.createMessage(channel.id, { embed });
     } catch (e) {
       caller.logger.warn(
-        `[Approve] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+        `[Maybe] ${command.msg.channel.id} ${e.code} ${e.message.replace(
           /\n\s/g,
           '',
         )}`,
@@ -140,6 +140,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       guild.trello.potential.id,
     );
   }
+  command.msg.delete().catch(() => {});
   caller.bot
     .createMessage(command.msg.channel.id, {
       embed: {

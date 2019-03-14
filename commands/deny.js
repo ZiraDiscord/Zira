@@ -49,7 +49,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
     );
   } catch (e) {
     caller.logger.warn(
-      `[Approve] ${command.msg.channel.id} ${e.code} ${e.message.replace(
+      `[Deny] ${command.msg.channel.id} ${e.code} ${e.message.replace(
         /\n\s/g,
         '',
       )}`,
@@ -140,6 +140,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       guild.trello.denied.id,
     );
   }
+  command.msg.delete().catch(() => {});
   caller.bot
     .createMessage(command.msg.channel.id, {
       embed: {

@@ -134,6 +134,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
         });
     }
   }
+  command.msg.delete().catch(() => {});
   caller.bot
     .createMessage(command.msg.channel.id, {
       embed: {
