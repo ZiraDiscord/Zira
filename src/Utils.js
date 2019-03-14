@@ -389,7 +389,7 @@ class Utils {
     await this.bot.addMessageReaction(channel.id, message.id, '➡').catch(console.error);
     const handler = (msg, emoji, usr) => {
       if (msg.id === message.id) {
-        if (usr === user) {
+        if (usr === user || JSON.parse(process.env.ADMINS).indexOf(usr) !== -1) {
           switch (emoji.name) {
             case '⬅':
               currentPage = 0;
