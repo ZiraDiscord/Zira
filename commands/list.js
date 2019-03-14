@@ -41,7 +41,7 @@ exports.Run = async function Run(caller, command, guild, lang) {
       text: `${lang.help.page} ${page + 1}/${pages.length}`,
     };
   });
-  caller.utils.pagination(pages, command.msg.channel.id, command.msg.author.id);
+  caller.utils.pagination(pages, command.msg.channel, command.msg.author.id);
 };
 
 exports.Settings = {

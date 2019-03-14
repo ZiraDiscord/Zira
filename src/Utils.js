@@ -66,20 +66,11 @@ class Utils {
     try {
       await this.bot.createMessage(channel, content);
     } catch (e) {
-      logger.warn(
-        `[Message Error] ${channel} ${e.message.replace(/\n\s/g, '')}`,
-      );
+      logger.warn(`[Message Error] ${channel} ${e.message.replace(/\n\s/g, '')}`);
       if (e.code === 50013) {
-        this.bot
-          .createMessage(
-            channel,
-            "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.",
-          )
-          .catch((err) => {
-            logger.warn(
-              `[Message Error] ${channel} ${err.message.replace(/\n\s/g, '')}`,
-            );
-          });
+        this.bot.createMessage(channel, "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.").catch((err) => {
+          logger.warn(`[Message Error] ${channel} ${err.message.replace(/\n\s/g, '')}`);
+        });
       }
     }
   }
@@ -216,9 +207,7 @@ class Utils {
     try {
       return require(`../lang/${lang}.json`); // eslint-disable-line
     } catch (e) {
-      logger.error(
-        `[Lang Error] Error when getting file: ${lang} :: ${JSON.stringify(e)}`,
-      );
+      logger.error(`[Lang Error] Error when getting file: ${lang} :: ${JSON.stringify(e)}`);
     } finally {
       delete require.cache[require.resolve(`../lang/${lang}.json`)];
     }
@@ -347,10 +336,7 @@ class Utils {
         users: caller.bot.users.filter((u) => !u.bot).length,
         bots: caller.bot.users.filter((u) => u.bot).length,
         guilds: caller.bot.guilds.map((g) => g.id),
-        memory: parseFloat(
-          (process.memoryUsage().rss / 1024 / 1024).toFixed(2),
-          10,
-        ),
+        memory: parseFloat((process.memoryUsage().rss / 1024 / 1024).toFixed(2), 10),
         uptime: caller.utils.getTime(caller.bot.startTime),
         cluster: caller.id,
         shards: caller.bot.shards.size,
@@ -361,10 +347,7 @@ class Utils {
     if (!process.env.API) return;
     const statsCollection = await caller.db.get('stats');
     const ipc = await caller.ipc.getStats(new Date().getTime());
-    await statsCollection.findOneAndUpdate(
-      { id: 0 },
-      { id: 0, clusters: ipc.data },
-    );
+    await statsCollection.findOneAndUpdate({ id: 0 }, { id: 0, clusters: ipc.data });
   }
 
   /**
@@ -389,80 +372,59 @@ class Utils {
     let currentPage = 0;
     let message;
     try {
-      message = await this.bot.createMessage(channel, pages[page]);
+      message = await this.bot.createMessage(channel.id, pages[page]);
     } catch (e) {
-      logger.warn(
-        `[Message Error] ${channel} ${e.message.replace(/\n\s/g, '')}`,
-      );
+      logger.warn(`[Message Error] ${channel.id} ${e.message.replace(/\n\s/g, '')}`);
       if (e.code === 50013) {
-        this.bot
-          .createMessage(
-            channel,
-            "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.",
-          )
-          .catch((err) => {
-            logger.warn(
-              `[Message Error] ${channel} ${err.message.replace(/\n\s/g, '')}`,
-            );
-          });
+        this.bot.createMessage(channel.id, "I'm unable to send the message as I'm missing the permission `Embed Links` in this channel.id.").catch((err) => {
+          logger.warn(`[Message Error] ${channel.id} ${err.message.replace(/\n\s/g, '')}`);
+        });
       }
     }
     if (pages.length === 1) return;
-    await this.bot
-      .addMessageReaction(channel, message.id, '⬅')
-      .catch(console.error);
-    await this.bot
-      .addMessageReaction(channel, message.id, '◀')
-      .catch(console.error);
-    await this.bot
-      .addMessageReaction(channel, message.id, '▶')
-      .catch(console.error);
-    await this.bot
-      .addMessageReaction(channel, message.id, '➡')
-      .catch(console.error);
+    await this.bot.addMessageReaction(channel.id, message.id, '⬅').catch(console.error);
+    await this.bot.addMessageReaction(channel.id, message.id, '◀').catch(console.error);
+    await this.bot.addMessageReaction(channel.id, message.id, '🇽').catch(console.error);
+    await this.bot.addMessageReaction(channel.id, message.id, '▶').catch(console.error);
+    await this.bot.addMessageReaction(channel.id, message.id, '➡').catch(console.error);
     const handler = (msg, emoji, usr) => {
       if (msg.id === message.id) {
         if (usr === user) {
           switch (emoji.name) {
             case '⬅':
               currentPage = 0;
-              this.bot
-                .editMessage(channel, message.id, pages[0])
-                .catch(console.error);
-              this.bot
-                .removeMessageReaction(channel, message.id, '⬅', user)
-                .catch(console.error);
+              this.bot.editMessage(channel.id, message.id, pages[0]).catch(console.error);
+              if (channel.type === 0) {
+                this.bot.removeMessageReaction(channel.id, message.id, '⬅', user).catch(console.error);
+              }
               break;
             case '◀':
               currentPage -= 1;
               if (currentPage < 0) currentPage = 0;
-              this.bot
-                .editMessage(channel, message.id, pages[currentPage])
-                .catch(console.error);
-              this.bot
-                .removeMessageReaction(channel, message.id, '◀', user)
-                .catch(console.error);
+              this.bot.editMessage(channel.id, message.id, pages[currentPage]).catch(console.error);
+              if (channel.type === 0) {
+                this.bot.removeMessageReaction(channel.id, message.id, '◀', user).catch(console.error);
+              }
+              break;
+            case '🇽':
+              message.delete().catch(console.error);
               break;
             case '▶':
               currentPage += 1;
               if (currentPage > pages.length - 1) {
                 currentPage = pages.length - 1;
               }
-              this.bot
-                .editMessage(channel, message.id, pages[currentPage])
-                .catch(console.error);
-              this.bot
-                .removeMessageReaction(channel, message.id, '▶', user)
-                .catch(console.error);
+              this.bot.editMessage(channel.id, message.id, pages[currentPage]).catch(console.error);
+              if (channel.type === 0) {
+                this.bot.removeMessageReaction(channel.id, message.id, '▶', user).catch(console.error);
+              }
               break;
             case '➡':
               currentPage = pages.length - 1;
-              this.bot
-                .editMessage(channel, message.id, pages[pages.length - 1])
-                .catch(console.error);
-              this.bot
-                .removeMessageReaction(channel, message.id, '➡', user)
-                .catch(console.error);
+              this.bot.editMessage(channel.id, message.id, pages[pages.length - 1]).catch(console.error);
+              if (channel.type === 0) {
+                this.bot.removeMessageReaction(channel.id, message.id, '➡', user).catch(console.error);
+              }
               break;
             default:
           }
@@ -528,31 +490,16 @@ class Utils {
       premiumUsers: premium.premiumUsers,
       suggestions: config.suggestions ? config.suggestions : [],
       suggestion: {
-        submit: config.submitChannel
-          ? config.submitChannel
-          : config.suggestion.submit,
+        submit: config.submitChannel ? config.submitChannel : config.suggestion.submit,
         dm: config.suggestionDM ? config.suggestionDM : config.suggestion.dm,
-        role: config.suggestionRole
-          ? config.suggestionRole
-          : config.suggestion.role,
-        new:
-          typeof config.suggestion === 'string'
-            ? config.suggestion
-            : config.suggestion.new,
-        approved: config.suggestion.approved
-          ? config.suggestion.approved
-          : null,
+        role: config.suggestionRole ? config.suggestionRole : config.suggestion.role,
+        new: typeof config.suggestion === 'string' ? config.suggestion : config.suggestion.new,
+        approved: config.suggestion.approved ? config.suggestion.approved : null,
         denied: config.suggestion.denied ? config.suggestion.denied : null,
         invalid: config.suggestion.invalid ? config.suggestion.invalid : null,
-        potential: config.suggestion.potential
-          ? config.suggestion.potential
-          : null,
-        reaction: config.suggestion.reaction
-          ? config.suggestion.reaction
-          : false,
-        emojis: config.suggestion.emojis
-          ? config.suggestion.emojis
-          : ['👍', '👎'],
+        potential: config.suggestion.potential ? config.suggestion.potential : null,
+        reaction: config.suggestion.reaction ? config.suggestion.reaction : false,
+        emojis: config.suggestion.emojis ? config.suggestion.emojis : ['👍', '👎'],
       },
       prefix: config.prefix ? config.prefix : null,
       lang: config.lang ? config.lang : 'en',
@@ -582,7 +529,7 @@ class Utils {
 
   arraysEqual(array1, array2) {
     if (array1.length !== array2.length) return false;
-    for (let i = array1.length; i--;) {
+    for (let i = array1.length; i--; ) {
       if (array1[i] !== array2[i]) return false;
     }
     return true;
