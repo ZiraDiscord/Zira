@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const mime = require('mime');
-const request = require('request').defaults({ encoding: null });
+const request = require('request');
 const logger = require('./logger');
 const DB = require('./DB');
 
@@ -22,7 +22,9 @@ class Utils {
     this.db = DB;
     this.bot = caller.bot;
     this.caller = caller;
+    this.lang = {};
     this.schema();
+    this.loadLanguages();
   }
 
   /**
@@ -190,12 +192,6 @@ class Utils {
     return `${i}th`;
   }
 
-  /**
-   * Get language file
-   * @param {Object} guild - Guild object
-   * @param {string} guild.lang - Language code
-   */
-  // eslint-disable-next-line consistent-return
   getLang(
     guild = {
       lang: 'en',
@@ -203,14 +199,10 @@ class Utils {
   ) {
     let { lang } = guild;
     if (!guild.lang) lang = 'en';
-    if (!fs.existsSync(`./lang/${lang}.json`)) lang = 'en';
-    try {
-      return require(`../lang/${lang}.json`); // eslint-disable-line
-    } catch (e) {
-      logger.error(`[Lang Error] Error when getting file: ${lang} :: ${JSON.stringify(e)}`);
-    } finally {
-      delete require.cache[require.resolve(`../lang/${lang}.json`)];
+    if (this.lang[lang]) {
+      return this.lang[lang];
     }
+    return this.lang.en;
   }
 
   combine(First, Second) {
@@ -535,15 +527,39 @@ class Utils {
     return true;
   }
 
-  async getImageBuffer(attachments) {
-    return new Promise(async (resolve, reject) => {
+  getImageBuffer(attachments) {
+    return new Promise((resolve, reject) => {
       if (!attachments.length || mime.getType(attachments[0].url).indexOf('image/') === -1) {
         resolve(null);
         return;
       }
-      request(attachments[0].url, async (err, res, body) => {
+      request.defaults({ encoding: null })(attachments[0].url, (err, res, body) => {
         if (err) {
           reject(err);
+        } else resolve(body);
+      });
+    });
+  }
+
+  async loadLanguages() {
+    for (const language of JSON.parse(process.env.LANGUAGES)) {
+      try {
+        const res = await this.loadLanguage(language);
+        this.lang[language] = JSON.parse(res);
+      } catch (e) {
+        console.error('Error while loading', language, e);
+      }
+    }
+    logger.info(`Loaded translations for ${Object.keys(this.lang).join(', ')}`);
+  }
+
+  loadLanguage(language) {
+    return new Promise((resolve, reject) => {
+      request(`https://raw.githubusercontent.com/ZiraDiscord/Translations/bot/${language}.json`, (err, res, body) => {
+        if (err) {
+          reject(err);
+        } else if (body === '404: Not Found\n') {
+          reject(new Error('404 Not Found'));
         } else resolve(body);
       });
     });

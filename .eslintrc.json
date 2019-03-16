@@ -39,6 +39,7 @@
     "no-await-in-loop": "off",
     "array-callback-return": "off",
     "no-underscore-dangle": "off",
-    "no-loop-func": "off"
+    "no-loop-func": "off",
+    "no-restricted-syntax": "off"
   }
 }

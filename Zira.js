@@ -62,7 +62,7 @@ class Zira {
           embeds: [{
             color: 7271027,
             title: `Cluster ${this.id} Ready`,
-            description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}\n**Guilds:** ${this.bot.guilds.size}`,
+            description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}\n**Guilds:** ${this.bot.guilds.size}\n**Languages Loaded:** ${Object.keys(this.utils.lang).join(', ')}`,
             footer: {
               text: this.bot.user.username,
               icon_url: this.bot.user.avatarURL,
