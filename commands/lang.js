@@ -14,9 +14,9 @@ exports.Run = async function Run(caller, command, guild, lang) {
     } else {
       let description = '';
       Object.keys(caller.utils.lang).forEach((lang) => {
-          description += `**${command.prefix}lang ${lang}** ~~-~~ ${caller.utils.lang[lang].language}\n\n`;
+          description += `**${command.prefix}lang ${lang}** ~~-~~ ${caller.utils.lang[lang].language}\n`;
       });
-      description += lang.commands.lang.translate;
+      description += `\n${lang.commands.lang.translate}`;
       caller.utils.createMessage(command.msg.channel.id, {
         embed: {
           color: caller.color.blue,
