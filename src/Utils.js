@@ -551,6 +551,20 @@ class Utils {
       }
     }
     logger.info(`Loaded translations for ${Object.keys(this.lang).join(', ')}`);
+    this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+      embeds: [
+        {
+          color: 7271027,
+          title: 'Translations Loaded',
+          description: `**Cluster:** ${this.caller.id}\n**Languages:** ${Object.keys(this.lang).join(', ')}`,
+          footer: {
+            text: this.bot.user.username,
+            icon_url: this.bot.user.avatarURL,
+          },
+          timestamp: new Date(),
+        },
+      ],
+    });
   }
 
   loadLanguage(language) {

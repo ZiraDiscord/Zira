@@ -120,6 +120,23 @@ class ClusterManager {
           }
           break;
         }
+        case 'loadLanguage': {
+          this.clusters.forEach((c) => {
+            c.worker.send({
+              name: 'language',
+              code: data.code,
+            });
+          });
+          break;
+        }
+        case 'reloadLanguages': {
+          this.clusters.forEach((c) => {
+            c.worker.send({
+              name: 'reload',
+            });
+          });
+          break;
+        }
         default:
       }
     });

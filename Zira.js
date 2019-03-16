@@ -54,7 +54,7 @@ class Zira {
             {
               color: 7271027,
               title: `Cluster ${this.id} Ready`,
-              description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}\n**Guilds:** ${this.bot.guilds.size}\n**Languages Loaded:** ${Object.keys(this.utils.lang).join(', ')}`,
+              description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}\n**Guilds:** ${this.bot.guilds.size}`,
               footer: {
                 text: this.bot.user.username,
                 icon_url: this.bot.user.avatarURL,
@@ -327,7 +327,7 @@ class Zira {
       }
     });
 
-    process.on('message', (data) => {
+    process.on('message', async (data) => {
       switch (data.name) {
         case 'guild': {
           const guild = this.bot.guilds.get(data.value);
@@ -372,6 +372,47 @@ class Zira {
             },
             cluster: this.id,
           });
+          break;
+        }
+        case 'language': {
+          try {
+            const language = await this.utils.loadLanguage(data.code);
+            this.utils.lang[data.code] = JSON.parse(language);
+            this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+              embeds: [
+                {
+                  color: 7271027,
+                  title: 'Translation Loaded',
+                  description: `**Cluster:** ${this.id}\n**Code:** ${data.code}`,
+                  footer: {
+                    text: this.bot.user.username,
+                    icon_url: this.bot.user.avatarURL,
+                  },
+                  timestamp: new Date(),
+                },
+              ],
+            });
+          } catch (e) {
+            console.error(e);
+            this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
+              embeds: [
+                {
+                  color: 16737075,
+                  title: 'Translation Load Error',
+                  description: `**Cluster:** ${this.id}\n**Code:** ${data.code}\n**Error:** ${e.message}`,
+                  footer: {
+                    text: this.bot.user.username,
+                    icon_url: this.bot.user.avatarURL,
+                  },
+                  timestamp: new Date(),
+                },
+              ],
+            });
+          }
+          break;
+        }
+        case 'reload': {
+          this.utils.loadLanguages();
           break;
         }
         default:
