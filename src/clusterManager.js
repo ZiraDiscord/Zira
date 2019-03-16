@@ -10,6 +10,7 @@ class ClusterManager {
     this.numberOfShards = shards;
     this.numberOfClusters = clusters;
     this.exit = false;
+    this.isRestart = false;
     this.queue = new Map();
     this.stats = {};
 
@@ -89,6 +90,36 @@ class ClusterManager {
             cluster: 'master',
           });
           break;
+        case 'restartCluster': {
+          this.isRestart = true;
+          let foundCluster;
+          this.clusters.forEach((c) => {
+            if (`${c.id}` === data.id) foundCluster = c;
+          });
+          if (foundCluster) {
+            foundCluster.worker.process.kill();
+            this.createNewWorker({
+              firstShardID: foundCluster.firstShardID,
+              lastShardID: foundCluster.lastShardID,
+              maxShards: this.numberOfShards,
+              cluster: foundCluster.id,
+            });
+            worker.send({
+              name: 'return',
+              id: data.id,
+              data: `Restarting Cluster ${foundCluster.id}`,
+              cluster: 'master',
+            });
+          } else {
+            worker.send({
+              name: 'return',
+              id: data.id,
+              data: 'Cluster Not Found',
+              cluster: 'master',
+            });
+          }
+          break;
+        }
         default:
       }
     });
@@ -156,6 +187,10 @@ class ClusterManager {
 
   onDeadWorker(deadWorker, reason) {
     if (this.exit) return;
+    if (this.isRestart) {
+      this.isRestart = false;
+      return;
+    }
     const cluster = this.clusters.get(deadWorker.id);
     logger.warn(`[Cluster] Died ID: ${deadWorker.id} - Cluster ${cluster.id} died: ${reason}`);
     if (!this.clusters.get(deadWorker.id)) {
