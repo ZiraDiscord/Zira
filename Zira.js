@@ -10,9 +10,7 @@ const Utils = require('./src/Utils.js');
 const IPC = require('./src/IPC.js');
 
 class Zira {
-  constructor({
-    firstShardID, lastShardID, maxShards, cluster,
-  }) {
+  constructor({ firstShardID, lastShardID, maxShards, cluster }) {
     this.bot = new Eris(process.env.TOKEN, {
       disableEvents: {
         TYPING_START: true,
@@ -38,15 +36,8 @@ class Zira {
     this.handler = new CommandHandler(this.bot, DB);
     this.utils = new Utils(this);
     this.userRateLimits = {};
-    if (
-      process.env.TRELLO_KEY &&
-      process.env.TRELLO_TOKEN &&
-      process.env.TRELLO_ID
-    ) {
-      this.trello = new Trello(
-        process.env.TRELLO_KEY,
-        process.env.TRELLO_TOKEN,
-      );
+    if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN && process.env.TRELLO_ID) {
+      this.trello = new Trello(process.env.TRELLO_KEY, process.env.TRELLO_TOKEN);
     }
     this.logger = logger;
     this.bot.on('ready', () => {
@@ -59,16 +50,18 @@ class Zira {
       this.utils.postStats(this);
       if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
         this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
-          embeds: [{
-            color: 7271027,
-            title: `Cluster ${this.id} Ready`,
-            description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}\n**Guilds:** ${this.bot.guilds.size}\n**Languages Loaded:** ${Object.keys(this.utils.lang).join(', ')}`,
-            footer: {
-              text: this.bot.user.username,
-              icon_url: this.bot.user.avatarURL,
+          embeds: [
+            {
+              color: 7271027,
+              title: `Cluster ${this.id} Ready`,
+              description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}\n**Guilds:** ${this.bot.guilds.size}\n**Languages Loaded:** ${Object.keys(this.utils.lang).join(', ')}`,
+              footer: {
+                text: this.bot.user.username,
+                icon_url: this.bot.user.avatarURL,
+              },
+              timestamp: new Date(),
             },
-            timestamp: new Date(),
-          }],
+          ],
         });
       }
     });
@@ -77,43 +70,36 @@ class Zira {
       this.logger.info(`[Shard] Cluster: ${this.id} ID: ${shard} ready!`);
       if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
         this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
-          embeds: [{
-            color: 7271027,
-            title: `Shard ${shard} Ready`,
-            description: `**Cluster:** ${this.id}`,
-            footer: {
-              text: this.bot.user.username,
-              icon_url: this.bot.user.avatarURL,
+          embeds: [
+            {
+              color: 7271027,
+              title: `Shard ${shard} Ready`,
+              description: `**Cluster:** ${this.id}`,
+              footer: {
+                text: this.bot.user.username,
+                icon_url: this.bot.user.avatarURL,
+              },
+              timestamp: new Date(),
             },
-            timestamp: new Date(),
-          }],
+          ],
         });
       }
     });
 
     this.handler.on('command', async (command) => {
-      const channel =
-        command.msg.channel.type === 0
-          ? `#${command.msg.channel.name} ${command.msg.channel.id}`
-          : 'DM';
+      const channel = command.msg.channel.type === 0 ? `#${command.msg.channel.name} ${command.msg.channel.id}` : 'DM';
       if (fs.existsSync(`./commands/${command.command}.js`)) {
         try {
           let guild = null;
           if (command.guild) {
             guild = await this.utils.getGuild(command.guild.id);
             guild.name = command.guild.name;
-            guild.icon = command.guild.iconURL
-              ? command.guild.iconURL.replace('.jpg', '.png')
-              : '';
+            guild.icon = command.guild.iconURL ? command.guild.iconURL.replace('.jpg', '.png') : '';
           }
 
           const lang = this.utils.getLang(guild !== null ? guild : { lang: 'en' });
 
-          this.logger.info(
-            `${channel} ${command.msg.author.username} (${
-              command.msg.author.id
-            }): ${command.command} ${command.params.join(' ')}`,
-          );
+          this.logger.info(`${channel} ${command.msg.author.username} (${command.msg.author.id}): ${command.command} ${command.params.join(' ')}`);
 
           const Command = require(`./commands/${command.command}.js`); // eslint-disable-line
 
@@ -127,30 +113,17 @@ class Zira {
             return;
           }
           const permissions =
-            JSON.parse(process.env.ADMINS).indexOf(command.msg.author.id) === -1
-              ? this.utils.checkPermissions(
-                  command.msg.member ? command.msg.member.permission.json : {},
-                  Command.Settings.permissions,
-                )
-              : { hasPermission: true, missing: [] };
-          if (
-            permissions.hasPermission === false &&
-            command.msg.member.roles.indexOf(guild.commandRole) === -1
-          ) {
-            this.logger.warn(
-              `${
-                command.msg.author.username
-              } is missing ${permissions.missing.join(', ')} to use ${
-                command.command
-              }`,
-            );
+            JSON.parse(process.env.ADMINS).indexOf(command.msg.author.id) === -1 ? this.utils.checkPermissions(command.msg.member ? command.msg.member.permission.json : {}, Command.Settings.permissions) : { hasPermission: true, missing: [] };
+          if (['approve', 'deny', 'invalid', 'maybe'].indexOf(command.command) !== -1 && command.msg.member.roles.indexOf(guild.suggestion.role) !== -1) {
+            permissions.hasPermission = true;
+          }
+          if (permissions.hasPermission === false && command.msg.member.roles.indexOf(guild.commandRole) === -1) {
+            this.logger.warn(`${command.msg.author.username} is missing ${permissions.missing.join(', ')} to use ${command.command}`);
             this.utils.createMessage(command.msg.channel.id, {
               embed: {
                 color: this.color.yellow,
                 title: lang.titleError,
-                description: `${
-                  lang.userPermissions
-                } **${permissions.missing.join(', ')}**`,
+                description: `${lang.userPermissions} **${permissions.missing.join(', ')}**`,
               },
             });
             return;
@@ -160,16 +133,10 @@ class Zira {
         } catch (err) {
           console.error(err);
         } finally {
-          delete require.cache[
-            require.resolve(`./commands/${command.command}.js`)
-          ];
+          delete require.cache[require.resolve(`./commands/${command.command}.js`)];
         }
       } else {
-        this.logger.info(
-          `${channel} ${command.msg.author.username} (${
-            command.msg.author.id
-          }): Unknown command ${command.command}`,
-        );
+        this.logger.info(`${channel} ${command.msg.author.username} (${command.msg.author.id}): Unknown command ${command.command}`);
       }
     });
 
@@ -177,16 +144,18 @@ class Zira {
       this.logger.warn(`[Cluster] ${this.id} disconnected`);
       if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
         this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
-          embeds: [{
-            color: 16737075,
-            title: `Cluster ${this.id} Disconnected`,
-            description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}`,
-            footer: {
-              text: this.bot.user.username,
-              icon_url: this.bot.user.avatarURL,
+          embeds: [
+            {
+              color: 16737075,
+              title: `Cluster ${this.id} Disconnected`,
+              description: `**Shards:** ${firstShardID} / ${lastShardID}\n**Total Shards:** ${maxShards}`,
+              footer: {
+                text: this.bot.user.username,
+                icon_url: this.bot.user.avatarURL,
+              },
+              timestamp: new Date(),
             },
-            timestamp: new Date(),
-          }],
+          ],
         });
       }
     });
@@ -195,16 +164,18 @@ class Zira {
       this.logger.warn(`[Shard] ${shard} disconnected ${message}`);
       if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
         this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
-          embeds: [{
-            color: 16737075,
-            title: `Shard ${shard} Disconnected`,
-            description: `**Cluster:** ${this.id}`,
-            footer: {
-              text: this.bot.user.username,
-              icon_url: this.bot.user.avatarURL,
+          embeds: [
+            {
+              color: 16737075,
+              title: `Shard ${shard} Disconnected`,
+              description: `**Cluster:** ${this.id}`,
+              footer: {
+                text: this.bot.user.username,
+                icon_url: this.bot.user.avatarURL,
+              },
+              timestamp: new Date(),
             },
-            timestamp: new Date(),
-          }],
+          ],
         });
       }
     });
@@ -213,16 +184,18 @@ class Zira {
       this.logger.warn(`[Shard] ${shard} resumed`);
       if (process.env.STATUS_ID && process.env.STATUS_TOKEN) {
         this.bot.executeWebhook(process.env.STATUS_ID, process.env.STATUS_TOKEN, {
-          embeds: [{
-            color: 16775040,
-            title: `Shard ${shard} Resumed`,
-            description: `**Cluster:** ${this.id}`,
-            footer: {
-              text: this.bot.user.username,
-              icon_url: this.bot.user.avatarURL,
+          embeds: [
+            {
+              color: 16775040,
+              title: `Shard ${shard} Resumed`,
+              description: `**Cluster:** ${this.id}`,
+              footer: {
+                text: this.bot.user.username,
+                icon_url: this.bot.user.avatarURL,
+              },
+              timestamp: new Date(),
             },
-            timestamp: new Date(),
-          }],
+          ],
         });
       }
     });
@@ -324,16 +297,16 @@ class Zira {
         Handler.Run(this, member, oldChannel, await this.utils.getGuild(member.guild.id));
       } catch (e) {
         console.error(e);
-       } finally {
+      } finally {
         delete require.cache[require.resolve('./events/voiceChannelLeave.js')];
-       }
+      }
     });
 
-     this.bot.on('voiceChannelSwitch', async (member, newChannel, oldChannel) => {
+    this.bot.on('voiceChannelSwitch', async (member, newChannel, oldChannel) => {
       try {
         const Handler = require('./events/voiceChannelSwitch.js'); // eslint-disable-line
         Handler.Run(this, member, newChannel, oldChannel, await this.utils.getGuild(member.guild.id));
-       } catch (e) {
+      } catch (e) {
         console.error(e);
       } finally {
         delete require.cache[require.resolve('./events/voiceChannelSwitch.js')];
@@ -384,9 +357,7 @@ class Zira {
             });
             return;
           }
-          user.guilds = this.bot.guilds
-            .filter((guild) => guild.members.get(data.value))
-            .map((guild) => ({ id: guild.id, name: guild.name }));
+          user.guilds = this.bot.guilds.filter((guild) => guild.members.get(data.value)).map((guild) => ({ id: guild.id, name: guild.name }));
           process.send({
             name: 'return',
             id: user.id,
@@ -396,9 +367,7 @@ class Zira {
               discriminator: user.discriminator,
               avatar: user.avatarURL,
               bot: user.bot,
-              guilds: this.bot.guilds
-              .filter((guild) => guild.members.get(data.value))
-              .map((guild) => ({ id: guild.id, name: guild.name })),
+              guilds: this.bot.guilds.filter((guild) => guild.members.get(data.value)).map((guild) => ({ id: guild.id, name: guild.name })),
               createdAt: user.createdAt,
             },
             cluster: this.id,

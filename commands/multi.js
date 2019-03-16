@@ -33,16 +33,6 @@ exports.Run = async function Run(caller, command, guild, lang) {
     });
     return;
   }
-  if (process.env.PREMIUM && !guild.premium && guild.roles.filter((r) => r.toggle).length > 11) {
-    caller.utils.createMessage(command.msg.channel.id, {
-      embed: {
-        color: caller.color.yellow,
-        title: lang.titles.error,
-        description: lang.commands.toggle.limit,
-      },
-    });
-    return;
-  }
   const emoji = command.params[0];
   const params = command.params
     .splice(1)
