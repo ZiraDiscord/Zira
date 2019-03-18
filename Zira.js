@@ -313,6 +313,17 @@ class Zira {
       }
     });
 
+    this.bot.on('guildRoleDelete', (guild, role) => {
+      try {
+        const Handler = require('./events/guildRoleDelete.js'); // eslint-disable-line
+        Handler.Run(this, guild, role);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        delete require.cache[require.resolve('./events/guildRoleDelete.js')];
+      }
+    });
+
     this.bot.on('rawWS', async (packet) => {
       if (packet.t !== 'MESSAGE_DELETE' && packet.t !== 'MESSAGE_DELETE_BULK') {
         return;
