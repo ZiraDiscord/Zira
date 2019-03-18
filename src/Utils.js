@@ -557,10 +557,6 @@ class Utils {
           color: 7271027,
           title: 'Translations Loaded',
           description: `**Cluster:** ${this.caller.id}\n**Languages:** ${Object.keys(this.lang).join(', ')}`,
-          footer: {
-            text: this.bot.user.username,
-            icon_url: this.bot.user.avatarURL,
-          },
           timestamp: new Date(),
         },
       ],
@@ -576,6 +572,27 @@ class Utils {
           reject(new Error('404 Not Found'));
         } else resolve(body);
       });
+    });
+  }
+
+  createChannel(guild, data) {
+    return new Promise((resolve, reject) => {
+      request(
+        {
+          uri: `https://discordapp.com/api/guilds/${guild}/channels`,
+          json: true,
+          method: 'POST',
+          body: data,
+          headers: {
+            Authorization: `Bot ${process.env.TOKEN}`,
+          },
+        },
+        (err, res, body) => {
+          if (err) {
+            reject(err);
+          } else resolve(body);
+        },
+      );
     });
   }
 }
