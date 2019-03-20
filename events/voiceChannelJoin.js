@@ -42,7 +42,7 @@ exports.Run = async function Run(caller, member, newChannel, GuildDB) {
 
       try {
         await caller.utils.createChannel(member.guild.id, {
-          name: `Delete Room [${member.username}]`,
+          name: `🡱 Waiting for move [${member.username}]`,
           type: 2,
           bitrate: 64000,
           position: newChannel.position + 2,

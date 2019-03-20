@@ -38,7 +38,7 @@ exports.Run = async function Run(caller, member, newChannel, oldChannel, GuildDB
       }
       try {
         await caller.utils.createChannel(member.guild.id, {
-          name: `Delete Room [${member.username}]`,
+          name: `🡱 Waiting for move [${member.username}]`,
           type: 2,
           bitrate: 64000,
           position: newChannel.position + 2,
@@ -77,7 +77,7 @@ exports.Run = async function Run(caller, member, newChannel, oldChannel, GuildDB
     try {
       if (oldChannel.name.indexOf(`${member.username} [Private Room]`) > -1) {
         const pattern = oldChannel.name.replace(' [Private Room]', '');
-        const mover = `Delete Room [${pattern}]`;
+        const mover = `🡱 Waiting for move [${pattern}]`;
         const move = member.guild.channels.find((chann) => chann.name === mover);
         await move.delete();
         await oldChannel.delete();

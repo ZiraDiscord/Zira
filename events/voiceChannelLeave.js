@@ -6,7 +6,7 @@ exports.Run = async function Run(caller, member, oldChannel, GuildDB) {
     if (oldChannel.name.indexOf(`${member.username} [Private Room]`) > -1) {
       try {
       const pattern = oldChannel.name.replace(' [Private Room]', '');
-      const mover = `Delete Room [${pattern}]`;
+      const mover = `🡱 Waiting for move [${pattern}]`;
       await member.guild.channels.find((chann) => chann.name === mover).delete();
       await oldChannel.delete();
       } catch (e) {
