@@ -16,7 +16,7 @@ exports.Run = async function Run(caller, member, newChannel, oldChannel, GuildDB
             {
               id: newChannel.guild.id,
               type: 'role',
-              allow: 1024,
+              allow: 0,
               deny: 1048576,
             },
             {
