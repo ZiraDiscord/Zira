@@ -87,16 +87,6 @@ exports.Run = async function Run(caller, command, guild, lang) {
       });
       break;
     }
-    if (!free.role) {
-      caller.utils.createMessage(command.msg.channel.id, {
-        embed: {
-          color: caller.color.yellow,
-          title: lang.titles.error,
-          description: lang.errors.usedRole.replace('$pair', caller.utils.ordinalSuffix(index + 1)),
-        },
-      });
-      break;
-    }
     try {
       await caller.bot.addMessageReaction(guild.currentChannel, guild.currentMessage, params[index][0].replace(/(<:)|(<)|(>)/g, ''));
     } catch (e) {
