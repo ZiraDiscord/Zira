@@ -21,6 +21,6 @@ We do not offer support in hosting your own version of Zira, as this code is no 
 
 If you find issues with the **public** version of Zira or just need help with it, please [join our support server.](https://discord.gg/txeTgNr)
 
-# Notice
+# Notice For People Hosting Their Own Zira Instance
 
-If you no longer want to host your own version of Zira, [join our support server](https://discord.gg/txeTgNr) and we can import your configuration into the public version of the bot.
+If you no longer want to host your own version of Zira or want to migrate it to the public bot, [join our support server](https://discord.gg/txeTgNr) and we can import your configuration files and guilds into the public version of the bot, so your users have a seamless experience.
